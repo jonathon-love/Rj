@@ -1,0 +1,9 @@
+title: Rj Editor
+name: Rj
+jus: '2.0'
+stage: 0
+compilerMode: tame
+events:
+  loaded: './rj.events::loaded'
+  update: './rj.events::update'
+children: []

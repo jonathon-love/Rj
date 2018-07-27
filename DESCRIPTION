@@ -1,0 +1,13 @@
+Package: Rj
+Type: Package
+Title: Editor to run R code inside jamovi
+Version: 1.0.0
+Author: Jonathon Love
+Maintainer: Jonathon Love <jon@thon.cc>
+Description: Provides an editor allowing you to enter R code, and analyse your
+  data using R inside jamovi.
+License: GPL >= 2
+Encoding: UTF-8
+LazyData: true
+Imports: jmvcore (>= 0.9.1), evaluate, R6
+RoxygenNote: 6.0.1

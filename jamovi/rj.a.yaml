@@ -1,0 +1,61 @@
+---
+name:  Rj
+title: Rj Editor
+menuGroup: R
+menuSubgroup: Rj
+version: '1.0.0'
+jas: '1.2'
+arbitraryCode: true
+
+options:
+    - name: data
+      type: Data
+
+    - name: code
+      default: |
+
+        # the data set is available as a dataframe called `data`
+        # i.e. call
+        #
+        # summary(data)
+
+      type: String
+      hidden: true
+
+    - name: R
+      title: R version
+      type: List
+      hidden: true
+      options:
+        - name: bundled
+          title: jamovi R
+        - name: external
+          title: System R
+
+    - name: vars
+      type: Variables
+      hidden: true
+
+    - name: output
+      type: List
+      hidden: true
+      options:
+        - noEcho
+        - echo
+
+    - name: figWidth
+      type: String
+      default: ''
+      hidden: true
+
+    - name: figHeight
+      type: String
+      default: ''
+      hidden: true
+
+    - name: toggle
+      type: Bool
+      hidden: true
+
+
+...
