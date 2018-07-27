@@ -1,0 +1,9 @@
+
+.Rproj.user/
+build/js
+build/R
+
+*.jmo
+.Rproj.user
+
+jamovi/js/node_modules/*
