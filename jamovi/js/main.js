@@ -26,8 +26,8 @@ const events = {
 		$contents.prepend(`
 		    <div id="editor-box">
 		        <div id="toolbar">
-		            <div id="config"></div>
-		            <div id="run"></div>
+		            <div id="config" title="Configuration"></div>
+		            <div id="run" title="Run"></div>
 		        </div>
 		        <div id="editor"></div>
                 <div id="info">Ctrl + Shift + Enter to run</div>
