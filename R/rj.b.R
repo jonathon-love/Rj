@@ -160,7 +160,12 @@ RjClass <- R6::R6Class(
             stop('Could not find system R')
         }),
     public=list(
-        asSource=function() '',
+        asSource=function() {
+            if ( ! self$options$output == 'echo')
+                return(self$options$code)
+            else
+                return('')
+        },
         .load=function(vChanges=character()) {
 
             jmvcore:::initProtoBuf()

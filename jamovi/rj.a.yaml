@@ -14,10 +14,9 @@ options:
     - name: code
       default: |
 
-        # the data set is available as a dataframe called `data`
-        # i.e. call
-        #
-        # summary(data)
+        library(jmv)
+
+        # descriptives(data[1:3])
 
       type: String
       hidden: true

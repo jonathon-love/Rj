@@ -4,6 +4,6 @@ jus: '2.0'
 stage: 0
 compilerMode: tame
 events:
-  loaded: './rj.events::loaded'
-  update: './rj.events::update'
+  loaded: './main::loaded'
+  update: './main::update'
 children: []

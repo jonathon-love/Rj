@@ -13,7 +13,7 @@ result <- try({
     if ( ! requireNamespace('jmvconnect', quietly=TRUE))
         stop('To use the system R from jamovi, jmvconnect must be installed', call.=FALSE)
 
-    if (packageVersion('jmvconnect') < '1.0.2')
+    if (packageVersion('jmvconnect') < '1.0.3')
         stop('To use the system R from jamovi, a newer version of jmvconnect is required', call.=FALSE)
 
 }, silent=TRUE)

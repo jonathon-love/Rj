@@ -124,6 +124,34 @@ const css = `
     color: inherit ;
     text-shadow: none ;
 }
+
+.ace_editor.ace_autocomplete .ace_line {
+    line-height: 20px ;
+}
+
+.ace_icon_data,
+.ace_icon_func,
+.ace_icon_var,
+.ace_icon_ns {
+    display: inline-block ;
+    width: 24px ;
+    background-repeat: no-repeat ;
+    background-size: 12px ;
+    background-position: center ;
+}
+
+.ace_icon_data {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAQklEQVR42mOImrXnPy0wA4jYeu8jVfGowZgG0yTy2jqn/8cFLly4SpYcyMwhajBIETXxEA6K0TAeDePRMMZjMC0wAFMtrQuuiigOAAAAAElFTkSuQmCC');
+}
+
+.ace_icon_func {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAXUlEQVR42mNgIAMETFn+n4HaAGRo7Yk7/6lqOMxQGKaK4eiGUsVwXIZSZDghQ8kynFhDSTKcVEOJMpxcQ/EaPmroEDGUpkmLppmBptmXpgUOTYtImhbqNK2GKK04AWuotkOGMq1EAAAAAElFTkSuQmCC');
+}
+
+.ace_icon_ns {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAA/UlEQVR42mOoVLgwEYjfAvF/KuB3IPPqta6wMVDJQBRcpXChgyYGg0KAoMEfXv38f+PEh//bpjwBs0Hgx9c/YD4+fXgNbrG5DDfoxf1v/0+sfwXGID4IzEy5RZ7BII0gADIUWXz/oudg8Qt73pJn8NrWB2ADQAZhs/DBlc/kGQxzGXp49gdeB4uDwp4sg0FeBYHFZXdRxEF8ioIC5FUQAEUisjgoArH5hGiDQckLlAKQDQYFA0gMJEd2cgMZgCupkZ2OYTEPCkeY12FJD5RaCGUsBlKTGrGYgdSkRrHBMO+jJzWKDYYlNVAqoKrBNC82ycSdDNCq6R3Vq6YhBwC4+XcNbpksvQAAAABJRU5ErkJggg==');
+}
+
 `;
 
 let node = document.createElement('style');

@@ -5,7 +5,14 @@ require('brace/mode/r');
 require('brace/ext/language_tools');
 
 require('./css');
-const funcs = require('./funcs');
+const Suggest = require('./suggest');
+const SuggestIcons = require('./suggesticons');
+
+// const SNIPPETS = require('./snippets');
+// const snippetManager = ace.acequire('ace/snippets').snippetManager;
+// const snippets = snippetManager.parseSnippetFile(SNIPPETS);
+// snippetManager.register(snippets, 'r');
+
 
 const events = {
 	loaded(ui) {
@@ -108,11 +115,12 @@ const events = {
                 else if (event.args == ':' && /[A-Za-z0-9]\:\:\:?$/.test(before))
                     editor.execCommand('startAutocomplete');
             }
-
-            if (event.command.name == 'backspace' &&
+            else if (event.command.name == 'backspace' &&
                 editor.completer &&
                 editor.completer.activated)
                     editor.execCommand("startAutocomplete");
+            else if (event.command.name === 'startAutocomplete')
+                SuggestIcons.add(event.editor);
         });
 
         this.editor.commands.on('exec', (event) => {
@@ -128,77 +136,21 @@ const events = {
             }
         });
 
-        let self = this; // haven't had to do this in a while
+        // clear the default completers
         this.editor.completers.splice(0, this.editor.completers.length);
-        this.editor.completers.push({
-            identifierRegexps: [/[A-Za-z0-9_\.\$]/],
-            getCompletions: function(editor, session, pos, prefix, callback) {
 
-                let row = pos.row;
-                let col = pos.column;
-                let line = editor.getSession().getDocument().getLine(row);
-                let before = line.substring(0, col - prefix.length);
+        // add the new one
+        this.editor.completers.push(new Suggest(() => {
+            return this.getColumnNames();
+        }));
 
-                let entries = funcs;
-
-                let match = before.match(/([A-Za-z][A-Za-z0-9]*)(\:\:\:?)$/);
-                if (match) {  // if package
-                    let ns = match[1];
-                    let dots = match[2];
-                    entries = entries.filter(entry => entry.ns === ns);
-                }
-                else {
-
-                    let vars1 = self.columns.map(col => {
-                        return {
-                            name: 'data$' + col,
-                            value: 'data$' + col,
-                            meta: 'variable' }});
-                    let vars2 = self.columns.map(col => {
-                        return {
-                            name: "'" + col + "'",
-                            value: "'" + col + "'",
-                            meta: 'variable' }});
-                    entries = entries.concat(vars1).concat(vars2);
-                }
-
-                entries = entries.filter((entry) => {
-                    return entry.value.toLowerCase().startsWith(prefix.toLowerCase());
+        this.getColumnNames = () => {
+            return new Promise((resolve) => {
+                this.requestData('columns').then((data) => {
+                    resolve(data.columns.map(col => col.name));
                 });
-
-                let index = 0;
-
-                entries = entries.map((entry) => {
-                    // custom completer
-                    entry.completer = this;
-                    // provide scores so it retains alphabetic sort
-                    let score = entries.length - index++;
-                    if (entry.value.startsWith(prefix))
-                        score += 1000;
-                    entry.score = score;
-                    return entry;
-                });
-
-                callback(null, entries);
-            },
-            insertMatch: (editor, entry) => {
-                if (entry.type === 'func') {
-                    editor.completer.insertMatch({value: entry.name + '()'});
-                    let pos = editor.getCursorPosition();
-                    if (pos.column > 0) {
-                        pos.column -= 1;
-                        editor.moveCursorToPosition(pos);
-                    }
-                }
-                else if (entry.type === 'ns') {
-                    editor.completer.insertMatch({value: entry.name});
-                    setTimeout(() => editor.execCommand("startAutocomplete"), 0);
-                }
-                else {
-                    editor.completer.insertMatch({value: entry.name});
-                }
-            },
-        });
+            });
+        };
 
         this.toggleMenu = (ui) => {
             if ( ! this.$menu.hasClass('visible'))
@@ -212,7 +164,7 @@ const events = {
         };
 
         this.hideMenu = (ui) => {
-	        this.$menu.removeClass('visible')
+	        this.$menu.removeClass('visible');
 
 	        ui.view.model.options.beginEdit();
 	        ui.figWidth.setValue(this.$figWidth.val());
@@ -226,9 +178,7 @@ const events = {
 
             let script = this.currentSession.getDocument().getValue();
 
-            this.requestData('columns').then((data) => {
-
-                let allVars = data.columns.map(col => col.name);
+            this.getColumnNames().then((columns) => {
 
                 ui.view.model.options.beginEdit();
 
@@ -242,12 +192,12 @@ const events = {
                     let content = match[1];
                     let vars = content.split(',');
                     vars = vars.map(s => s.trim());
-                    vars = vars.filter(v => allVars.includes(v));
+                    vars = vars.filter(v => columns.includes(v));
                     ui.vars.setValue(vars);
                     ui.code.setValue(script);
                 }
                 else {
-                    ui.vars.setValue(allVars);
+                    ui.vars.setValue(columns);
                     ui.code.setValue(script);
                 }
 
@@ -262,12 +212,23 @@ const events = {
     	};
 
         this.$editor.on('keydown', (event) => {
+
             if (event.keyCode === 13 && (event.metaKey || event.ctrlKey) && event.shiftKey) {
+                // ctrl+shift+enter
                 this.run(ui);
                 event.stopPropagation();
             }
             else if (event.keyCode === 65 && event.metaKey) {
+                // ctrl+a
                 this.$editor.select();
+            }
+            else if (event.keyCode === 67 && (event.metaKey || event.ctrlKey) && event.shiftKey)             {
+                // ctrl+shift+c
+                this.editor.toggleCommentLines();
+            }
+            else if (event.keyCode === 191 && (event.metaKey || event.ctrlKey)) {
+                // ctrl+/
+                this.editor.toggleCommentLines();
             }
         });
 
@@ -292,10 +253,6 @@ const events = {
         this.$figHeight.val(ui.figHeight.value());
         this.$output.val(ui.output.value());
         this.$r.val(ui.R.value());
-
-        this.requestData('columns').then((data) => {
-            this.columns = data.columns.map(col => col.name);
-        });
     },
 };
 
