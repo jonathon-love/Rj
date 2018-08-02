@@ -18,6 +18,8 @@ result <- try({
 
 }, silent=TRUE)
 
+library('methods')  # necessary on windows for some reason
+
 if (inherits(result, 'try-error')) {
     reportError(result)
 } else {
