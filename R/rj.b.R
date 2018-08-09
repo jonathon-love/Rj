@@ -77,7 +77,12 @@ RjClass <- R6::R6Class(
 
                 for (line in result) {
                     if (jmvcore::startsWith(line, 'ERROR: ')) {
-                        stop(substring(line, 7), call.=FALSE)
+
+                        message <- substring(line, 8)
+                        if (message == 'Memory segment version is too new')
+                            message <- 'A newer version of jmvconnect is required'
+                        stop(message, call.=FALSE)
+
                     } else if (line == 'OK') {
                         results <- readRDS(file=outputPath)
                         for (item in results$items)

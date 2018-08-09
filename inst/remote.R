@@ -27,6 +27,6 @@ if (inherits(result, 'try-error')) {
     if (inherits(result, 'try-error')) {
         reportError(result)
     } else {
-        cat('OK')
+        cat('OK\n')
     }
 }

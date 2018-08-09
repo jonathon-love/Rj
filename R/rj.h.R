@@ -6,7 +6,7 @@ RjOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
     inherit = jmvcore::Options,
     public = list(
         initialize = function(
-            code = "\nlibrary(jmv)\nif (packageVersion('jmv') < package_version('0.9.1.10'))\n    stop('A newer version of jmv is required')\n\n# descriptives(data[1:3])\n",
+            code = "\n# summary(data[1:3])\n",
             R = NULL,
             vars = NULL,
             output = NULL,
@@ -23,7 +23,7 @@ RjOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             private$..code <- jmvcore::OptionString$new(
                 "code",
                 code,
-                default="\nlibrary(jmv)\nif (packageVersion('jmv') < package_version('0.9.1.10'))\n    stop('A newer version of jmv is required')\n\n# descriptives(data[1:3])\n",
+                default="\n# summary(data[1:3])\n",
                 hidden=TRUE)
             private$..R <- jmvcore::OptionList$new(
                 "R",
@@ -35,7 +35,11 @@ RjOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             private$..vars <- jmvcore::OptionVariables$new(
                 "vars",
                 vars,
-                hidden=TRUE)
+                hidden=TRUE,
+                permitted=list(
+                    "factor",
+                    "numeric",
+                    "id"))
             private$..output <- jmvcore::OptionList$new(
                 "output",
                 output,
@@ -132,7 +136,7 @@ RjBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #' @export
 Rj <- function(
     data,
-    code = "\nlibrary(jmv)\nif (packageVersion('jmv') < package_version('0.9.1.10'))\n    stop('A newer version of jmv is required')\n\n# descriptives(data[1:3])\n",
+    code = "\n# summary(data[1:3])\n",
     R,
     vars,
     output,
