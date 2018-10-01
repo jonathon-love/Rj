@@ -50,6 +50,8 @@ RjClass <- R6::R6Class(
 
                 if (Sys.info()['sysname'] == 'Windows') {
 
+                    Sys.setenv(R_LIBS_USER='~/R/win-library/%v')
+
                     result <- system2(
                         command='c:\\windows\\system32\\cmd.exe',
                         args=c(
