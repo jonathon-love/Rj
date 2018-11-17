@@ -1,9 +1,9 @@
 title: Rj Editor
 name: Rj
 jus: '2.0'
-stage: 0
 compilerMode: tame
 events:
   loaded: './main::loaded'
   update: './main::update'
+  remoteDataChanged: './main::onDataChanged'
 children: []

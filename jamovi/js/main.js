@@ -106,7 +106,7 @@ const events = {
 
         this.editor.commands.on('afterExec', (event) => {
             let editor = event.editor;
-            if (event.command.name == "insertstring") {
+            if (event.command.name == 'insertstring') {
                 let position = editor.getCursorPosition();
                 let line = editor.getSession().getDocument().getLine(position.row);
                 let before = line.substring(0, position.column);
@@ -118,7 +118,7 @@ const events = {
             else if (event.command.name == 'backspace' &&
                 editor.completer &&
                 editor.completer.activated)
-                    editor.execCommand("startAutocomplete");
+                    editor.execCommand('startAutocomplete');
             else if (event.command.name === 'startAutocomplete')
                 SuggestIcons.add(event.editor);
         });
@@ -195,10 +195,12 @@ const events = {
                     vars = vars.filter(v => columns.includes(v));
                     ui.vars.setValue(vars);
                     ui.code.setValue(script);
+					this.currentSession.allColumns = false;
                 }
                 else {
                     ui.vars.setValue(columns);
                     ui.code.setValue(script);
+					this.currentSession.allColumns = true;
                 }
 
                 // toggle toggle so the analysis *always* reruns
@@ -233,6 +235,18 @@ const events = {
         });
 
 
+	},
+
+	onDataChanged(ui, event) {
+		if ( ! this.currentSession.allColumns)
+			return;
+		if (event.dataType !== 'columns')
+			return;
+		this.getColumnNames().then((columns) => {
+			let old = ui.vars.value();
+			if ( ! _.isEqual(old, columns))
+				ui.vars.setValue(columns);
+		});
 	},
 
     update(ui, event) {
