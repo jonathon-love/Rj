@@ -30,7 +30,7 @@ eval <- function(script, data, echo, root, ...) {
     if (missing(root))
         root <- jmvcore::Group$new(options, title="Results")
 
-    text_handler <- function(object) {
+    text_handler <- function(object, capture=TRUE) {
 
         results <- jmvcore::Preformatted$new(options, paste(env$count))
         env$count <- env$count + 1
@@ -40,6 +40,9 @@ eval <- function(script, data, echo, root, ...) {
         if (inherits(object, 'ResultsElement')) {
             object$print()
             value <- object$asString()
+        }
+        else if (is.character(object) && ! capture) {
+            value <- object
         }
         else {
             value <- capture.output(object)
@@ -94,7 +97,8 @@ eval <- function(script, data, echo, root, ...) {
 
     handler <- evaluate::new_output_handler(
         source=source_handler,
-        value=text_handler,
+        text=function(text) text_handler(text, FALSE),
+        value=function(text) text_handler(text, TRUE),
         graphics=graphics_handler)
 
     evaluate::evaluate(
@@ -105,4 +109,3 @@ eval <- function(script, data, echo, root, ...) {
 
     root
 }
-
