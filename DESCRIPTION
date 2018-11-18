@@ -1,7 +1,7 @@
 Package: Rj
 Type: Package
 Title: Editor to run R code inside jamovi
-Version: 1.0.2
+Version: 1.0.6
 Author: Jonathon Love
 Maintainer: Jonathon Love <jon@thon.cc>
 Description: Provides an editor allowing you to enter R code, and analyse your
