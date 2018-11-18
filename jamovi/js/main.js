@@ -145,11 +145,22 @@ const events = {
         }));
 
         this.getColumnNames = () => {
-            return new Promise((resolve) => {
-                this.requestData('columns').then((data) => {
-                    resolve(data.columns.map(col => col.name));
-                });
-            });
+            return this.requestData('columns', {  })
+				.then((data) => {
+	                return data.columns.map(col => col.name);
+	            }).then((names) => {
+					// exclude filters
+					let index = 0;
+					for (;index < names.length; index++) {
+						let name = names[index];
+						if (/^Filter [1-9][0-9]*$/.exec(name) ||
+							/^F[1-9][0-9]* \([1-9][0-9]*\)$/.exec(name))
+								continue; // a filter
+						else
+							break; // not a filter
+					}
+					return names.slice(index);
+				});
         };
 
         this.toggleMenu = (ui) => {
