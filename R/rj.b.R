@@ -46,7 +46,9 @@ RjClass <- R6::R6Class(
                     'R_ENVIRON_USER',
                     'R_LIBS_SITE',
                     'R_LIBS_USER',
-                    'R_LIBS'));
+                    'R_LIBS',
+                    'R_USER',
+                    'HOME'));
 
                 if (Sys.info()['sysname'] == 'Windows') {
 
