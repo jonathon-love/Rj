@@ -102,7 +102,7 @@ eval <- function(script, data, echo, root, ...) {
         graphics=graphics_handler)
 
     # prevents a flashing window on windows
-    options(device=grDevices::pdf)
+    options(device=function(...) pdf(file=NULL, ...))
 
     evaluate::evaluate(
         input=script,
