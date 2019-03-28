@@ -32,23 +32,26 @@ eval <- function(script, data, echo, root, ...) {
 
     text_handler <- function(object, capture=TRUE) {
 
-        results <- jmvcore::Preformatted$new(options, paste(env$count))
-        env$count <- env$count + 1
-        env$last <- NULL
-        root$add(results)
-
         if (inherits(object, 'ResultsElement')) {
+            
             object$print()
-            value <- object$asString()
-        }
-        else if (is.character(object) && ! capture) {
-            value <- object
-        }
-        else {
-            value <- capture.output(object)
-        }
 
-        results$setContent(value)
+        } else {
+
+            results <- jmvcore::Preformatted$new(options, paste(env$count))
+            env$count <- env$count + 1
+            env$last <- NULL
+            root$add(results)
+
+            if (is.character(object) && ! capture) {
+                value <- object
+            }
+            else {
+                value <- capture.output(object)
+            }
+
+            results$setContent(value)
+        }
 
         object
     }
