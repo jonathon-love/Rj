@@ -1,4 +1,10 @@
 
+if (Sys.info()['sysname'] == 'Windows') {
+    Sys.setlocale('LC_ALL', 'English_United States.1252')
+} else {
+    Sys.setlocale('LC_ALL', 'en_US.UTF-8')
+}
+
 reportError <- function(result) {
     error <- attr(result, 'condition')
     if ( ! is.null(error$message)) {
