@@ -28,6 +28,7 @@ options:
           title: jamovi R
         - name: external
           title: System R
+      default: bundled
 
     - name: vars
       type: Variables
@@ -43,6 +44,7 @@ options:
       options:
         - noEcho
         - echo
+      default: noEcho
 
     - name: figWidth
       type: String
@@ -56,6 +58,7 @@ options:
 
     - name: toggle
       type: Bool
+      default: false
       hidden: true
 
 

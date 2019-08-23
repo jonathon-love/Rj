@@ -7,12 +7,12 @@ RjOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
     public = list(
         initialize = function(
             code = "\n# summary(data[1:3])\n",
-            R = NULL,
+            R = "bundled",
             vars = NULL,
-            output = NULL,
+            output = "noEcho",
             figWidth = "",
             figHeight = "",
-            toggle = NULL, ...) {
+            toggle = FALSE, ...) {
 
             super$initialize(
                 package='Rj',
@@ -31,7 +31,8 @@ RjOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 hidden=TRUE,
                 options=list(
                     "bundled",
-                    "external"))
+                    "external"),
+                default="bundled")
             private$..vars <- jmvcore::OptionVariables$new(
                 "vars",
                 vars,
@@ -46,7 +47,8 @@ RjOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 hidden=TRUE,
                 options=list(
                     "noEcho",
-                    "echo"))
+                    "echo"),
+                default="noEcho")
             private$..figWidth <- jmvcore::OptionString$new(
                 "figWidth",
                 figWidth,
@@ -60,6 +62,7 @@ RjOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             private$..toggle <- jmvcore::OptionBool$new(
                 "toggle",
                 toggle,
+                default=FALSE,
                 hidden=TRUE)
 
             self$.addOption(private$..code)
@@ -137,20 +140,22 @@ RjBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 Rj <- function(
     data,
     code = "\n# summary(data[1:3])\n",
-    R,
+    R = "bundled",
     vars,
-    output,
+    output = "noEcho",
     figWidth = "",
     figHeight = "",
-    toggle) {
+    toggle = FALSE) {
 
     if ( ! requireNamespace('jmvcore'))
         stop('Rj requires jmvcore to be installed (restart may be required)')
 
+    if ( ! missing(vars)) vars <- jmvcore::resolveQuo(jmvcore::enquo(vars))
     if (missing(data))
-        data <- jmvcore:::marshalData(
+        data <- jmvcore::marshalData(
             parent.frame(),
             `if`( ! missing(vars), vars, NULL))
+
 
     options <- RjOptions$new(
         code = code,
@@ -160,9 +165,6 @@ Rj <- function(
         figWidth = figWidth,
         figHeight = figHeight,
         toggle = toggle)
-
-    results <- RjResults$new(
-        options = options)
 
     analysis <- RjClass$new(
         options = options,
