@@ -5,3 +5,4 @@ build/R
 
 *.jmo
 .Rproj.user
+build/R*
