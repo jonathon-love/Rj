@@ -85,6 +85,8 @@ RjClass <- R6::R6Class(
                         message <- substring(line, 8)
                         if (message == 'Memory segment version is too new')
                             message <- 'A newer version of jmvconnect is required'
+                        if (message == 'Memory segment version is too old')
+                            message <- 'A newer version of jamovi is required'
                         stop(message, call.=FALSE)
 
                     } else if (line == 'OK') {
