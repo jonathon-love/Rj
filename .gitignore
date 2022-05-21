@@ -1,8 +1,8 @@
 
-.Rproj.user/
 build/js
-build/R
+build/R*
 
 *.jmo
+
+.DS_Store
 .Rproj.user
-build/R*
