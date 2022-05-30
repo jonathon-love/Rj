@@ -14,7 +14,7 @@ RjClass <- R6::R6Class(
 
             if (self$options$R == 'bundled') {
 
-                eval(code, self$data, echo, self$results,
+                eval(code, self$options, self$data, echo, self$results,
                      figWidth=figWidth, figHeight=figHeight)
 
             } else {

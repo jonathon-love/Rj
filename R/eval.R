@@ -1,10 +1,12 @@
 
-eval <- function(script, data, echo, root, ...) {
+eval <- function(script, options, data, echo, root, ...) {
 
     eval.env <- new.env()
 
     if ( ! missing(data))
         eval.env$data <- data
+
+    origColumnNames <- colnames(eval.env$data)
 
     env <- new.env()
     env$count <- 1
@@ -25,15 +27,13 @@ eval <- function(script, data, echo, root, ...) {
 
     env$echo <- isTRUE(echo)
 
-    options <- jmvcore::Options$new()
-
     if (missing(root))
         root <- jmvcore::Group$new(options, title="Results")
 
     text_handler <- function(object, capture=TRUE) {
 
         if (inherits(object, 'ResultsElement')) {
-            
+
             object$print()
 
         } else {
@@ -107,11 +107,53 @@ eval <- function(script, data, echo, root, ...) {
     # prevents a flashing window on windows
     options(device=function(...) pdf(file=NULL, ...))
 
-    evaluate::evaluate(
+    data <- evaluate::evaluate(
         input=script,
         envir=eval.env,
         output_handler=handler,
         stop_on_error=2)
+
+    data <- eval.env$data
+
+    output <- jmvcore::Output$new(options, 'createdColumns', initInRun=TRUE)
+
+    if (output$enabled) {
+
+        root$add(output)
+
+        keys  <- character()
+        names <- character()
+        descs <- character()
+        types <- character()
+
+        for (columnName in colnames(data)) {
+            if (columnName %in% origColumnNames)
+                next()
+            column <- data[[columnName]]
+            keys <- c(keys, columnName)
+            names <- c(names, columnName)
+
+            desc <- attr(column, 'jmv-desc')
+            if (is.null(desc))
+                desc <- ''
+
+            descs <- c(descs, desc)
+
+            if (is.double(column))
+                type <- 'continuous'
+            else if (is.ordered(column))
+                type <- 'ordinal'
+            else
+                type <- 'nominal'
+
+            types <- c(types, type)
+        }
+
+        output$set(keys, names, descs, types)
+
+        for (key in keys)
+            output$setValues(key=key, data[[key]])
+    }
 
     root
 }

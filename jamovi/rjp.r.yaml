@@ -1,0 +1,11 @@
+---
+name:  Rjp
+title: R
+jrs:   '1.1'
+
+items:
+  - name: createdColumns
+    type: Output
+    initInRun: true
+
+...

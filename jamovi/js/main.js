@@ -15,21 +15,21 @@ const SuggestIcons = require('./suggesticons');
 
 
 const events = {
-	loaded(ui) {
+    loaded(ui) {
 
-	    this.editSessions = { };
+        this.editSessions = { };
 
-	    let $contents = ui.view.$el;
-	    $contents.css('display', 'flex');
-	    $contents.css('flex-direction', 'column');
+        let $contents = ui.view.$el;
+        $contents.css('display', 'flex');
+        $contents.css('flex-direction', 'column');
 
-		$contents.prepend(`
-		    <div id="editor-box">
-		        <div id="toolbar">
-		            <div id="config" title="Configuration"></div>
-		            <div id="run" title="Run"></div>
-		        </div>
-		        <div id="editor"></div>
+        $contents.append(`
+            <div id="editor-box">
+                <div id="toolbar">
+                    <div id="config" title="Configuration"></div>
+                    <div id="run" title="Run"></div>
+                </div>
+                <div id="editor"></div>
                 <div id="info">Ctrl + Shift + Enter to run</div>
             </div>`);
 
@@ -55,43 +55,43 @@ const events = {
                 </div>
             </div>`);
 
-		this.$editor = $contents.find('#editor');
-		this.$run = $contents.find('#run');
-		this.$menu = $contents.find('#menu');
+        this.$editor = $contents.find('#editor');
+        this.$run = $contents.find('#run');
+        this.$menu = $contents.find('#menu');
 
-		this.$run.on('click', () => this.run(ui));
+        this.$run.on('click', () => this.run(ui));
 
-		this.$output = $config.find('#output');
-		this.$output.on('change', (event) => {
-		    ui.output.setValue(this.$output.val());
-		});
+        this.$output = $config.find('#output');
+        this.$output.on('change', (event) => {
+            ui.output.setValue(this.$output.val());
+        });
 
-		this.$r = $config.find('#r-version');
-		this.$r.on('change', (event) => {
-		    ui.R.setValue(this.$r.val());
-		});
+        this.$r = $config.find('#r-version');
+        this.$r.on('change', (event) => {
+            ui.R.setValue(this.$r.val());
+        });
 
-		this.$figWidth = $config.find('#figure-width');
-		this.$figHeight = $config.find('#figure-height');
+        this.$figWidth = $config.find('#figure-width');
+        this.$figHeight = $config.find('#figure-height');
 
-		this.$menu.find('input').on('keyup', (event) => {
-		    if (event.keyCode == 13)
-		        this.run(ui);
-		});
+        this.$menu.find('input').on('keyup', (event) => {
+            if (event.keyCode == 13)
+                this.run(ui);
+        });
 
-		$config.on('click', (event) => {
-		    if (event.target === $config[0])
-		        this.toggleMenu(ui);
-		});
+        $config.on('click', (event) => {
+            if (event.target === $config[0])
+                this.toggleMenu(ui);
+        });
 
-		this.$editor.on('click', () => {
+        this.$editor.on('click', () => {
             this.hideMenu(ui);
-		});
+        });
 
-		if (navigator.platform === 'MacIntel') {
-		    let $info = $contents.find('#info');
-		    $info.text('\u2318 + Shift + Enter to run');
-		}
+        if (navigator.platform === 'MacIntel') {
+            let $info = $contents.find('#info');
+            $info.text('\u2318 + Shift + Enter to run');
+        }
 
         this.editor = ace.edit('editor');
 
@@ -146,58 +146,61 @@ const events = {
 
         this.getColumnNames = () => {
             return this.requestData('columns', {  })
-				.then((data) => {
-	                return data.columns.map(col => col.name);
-	            }).then((names) => {
-					// exclude filters
-					let index = 0;
-					for (;index < names.length; index++) {
-						let name = names[index];
-						if (/^Filter [1-9][0-9]*$/.exec(name) ||
-							/^F[1-9][0-9]* \([1-9][0-9]*\)$/.exec(name))
-								continue; // a filter
-						else
-							break; // not a filter
-					}
-					return names.slice(index);
-				});
+                .then((data) => {
+                    return data.columns.map(col => col.name);
+                }).then((names) => {
+                    // exclude filters
+                    let index = 0;
+                    for (;index < names.length; index++) {
+                        let name = names[index];
+                        if (/^Filter [1-9][0-9]*$/.exec(name) ||
+                            /^F[1-9][0-9]* \([1-9][0-9]*\)$/.exec(name))
+                                continue; // a filter
+                        else
+                            break; // not a filter
+                    }
+                    return names.slice(index);
+                });
         };
 
         this.toggleMenu = (ui) => {
             if ( ! this.$menu.hasClass('visible'))
-		        this.showMenu(ui);
-		    else
-		        this.hideMenu(ui);
+                this.showMenu(ui);
+            else
+                this.hideMenu(ui);
         };
 
         this.showMenu = (ui) => {
-		    this.$menu.addClass('visible');
+            this.$menu.addClass('visible');
         };
 
         this.hideMenu = (ui) => {
-	        this.$menu.removeClass('visible');
+            this.$menu.removeClass('visible');
 
-	        ui.view.model.options.beginEdit();
-	        ui.figWidth.setValue(this.$figWidth.val());
-	        ui.figHeight.setValue(this.$figHeight.val());
-	        ui.output.setValue(this.$output.val());
-	        ui.R.setValue(this.$r.val());
-	        ui.view.model.options.endEdit();
+            ui.view.model.options.beginEdit();
+            ui.figWidth.setValue(this.$figWidth.val());
+            ui.figHeight.setValue(this.$figHeight.val());
+            ui.output.setValue(this.$output.val());
+            ui.R.setValue(this.$r.val());
+            ui.view.model.options.endEdit();
         };
 
-        this.run = (ui) => {
+        this.run = async(ui) => {
 
             let script = this.currentSession.getDocument().getValue();
 
-            this.getColumnNames().then((columns) => {
+            let columns = [ ];
+            if (window.name === 'Rj-Rj')
+                columns = await this.getColumnNames();
 
-                ui.view.model.options.beginEdit();
+            ui.view.model.options.beginEdit();
 
-                ui.figWidth.setValue(this.$figWidth.val());
-	            ui.figHeight.setValue(this.$figHeight.val());
-	            ui.output.setValue(this.$output.val());
-	            ui.R.setValue(this.$r.val());
+            ui.figWidth.setValue(this.$figWidth.val());
+            ui.figHeight.setValue(this.$figHeight.val());
+            ui.output.setValue(this.$output.val());
+            ui.R.setValue(this.$r.val());
 
+            if (window.name === 'Rj-Rj') {
                 let match = script.match(/^\s*\#\s*\((.*)\)/);
                 if (match !== null) {
                     let content = match[1];
@@ -206,23 +209,26 @@ const events = {
                     vars = vars.filter(v => columns.includes(v));
                     ui.vars.setValue(vars);
                     ui.code.setValue(script);
-					this.currentSession.allColumns = false;
+                    this.currentSession.allColumns = false;
                 }
                 else {
                     ui.vars.setValue(columns);
                     ui.code.setValue(script);
-					this.currentSession.allColumns = true;
+                    this.currentSession.allColumns = true;
                 }
+            }
+            else {
+                ui.code.setValue(script);
+            }
 
-                // toggle toggle so the analysis *always* reruns
-                // even if nothing has changed
-                ui.toggle.setValue( ! ui.toggle.value());
+            // toggle toggle so the analysis *always* reruns
+            // even if nothing has changed
+            ui.toggle.setValue( ! ui.toggle.value());
 
-                ui.view.model.options.endEdit();
+            ui.view.model.options.endEdit();
 
-                this.editor.focus();
-            });
-    	};
+            this.editor.focus();
+        };
 
         this.$editor.on('keydown', (event) => {
 
@@ -246,19 +252,19 @@ const events = {
         });
 
 
-	},
+    },
 
-	onDataChanged(ui, event) {
-		if ( ! this.currentSession.allColumns)
-			return;
-		if (event.dataType !== 'columns')
-			return;
-		this.getColumnNames().then((columns) => {
-			let old = ui.vars.value();
-			if ( ! _.isEqual(old, columns))
-				ui.vars.setValue(columns);
-		});
-	},
+    onDataChanged(ui, event) {
+        if ( ! this.currentSession.allColumns)
+            return;
+        if (event.dataType !== 'columns')
+            return;
+        this.getColumnNames().then((columns) => {
+            let old = ui.vars.value();
+            if ( ! _.isEqual(old, columns))
+                ui.vars.setValue(columns);
+        });
+    },
 
     update(ui, event) {
 
