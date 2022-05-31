@@ -142,7 +142,7 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
 
             descs <- c(descs, desc)
 
-            if (is.double(column))
+            if (is.numeric(column))
                 type <- 'continuous'
             else if (is.ordered(column))
                 type <- 'ordinal'
