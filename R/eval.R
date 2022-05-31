@@ -1,5 +1,5 @@
 
-eval <- function(script, options, data, echo, root, ...) {
+eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColumns=FALSE, ...) {
 
     eval.env <- new.env()
 
@@ -11,21 +11,24 @@ eval <- function(script, options, data, echo, root, ...) {
     env <- new.env()
     env$count <- 1
 
-    conf <- list(...)
-
-    figWidth <- as.integer(conf$figWidth)
+    figWidth <- as.integer(figWidth)
     if (length(figWidth) == 1 && ! is.na(figWidth))
         env$figWidth <- figWidth
     else
         env$figWidth <- 400
 
-    figHeight <- as.integer(conf$figHeight)
+    figHeight <- as.integer(figHeight)
     if (length(figHeight) == 1 && ! is.na(figHeight))
         env$figHeight <- figHeight
     else
         env$figHeight <- 300
 
     env$echo <- isTRUE(echo)
+
+    createdColumns <- jmvcore::OptionOutput$new('createdColumns')
+    createdColumns$value <- list(value=saveColumns, vars=character(), synced=character())
+    options <- jmvcore::Options$new()
+    options$.addOption(createdColumns)
 
     if (missing(root))
         root <- jmvcore::Group$new(options, title="Results")

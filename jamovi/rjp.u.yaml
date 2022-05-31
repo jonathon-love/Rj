@@ -22,8 +22,3 @@ children:
                 name: vars
                 isTarget: true
                 height: smallest
-  - type: LayoutBox
-    margin: large
-    children:
-      - type: Output
-        name: createdColumns

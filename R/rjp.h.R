@@ -6,7 +6,7 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Options,
     public = list(
         initialize = function(
-            code = "\nhead(data)\n",
+            code = "\nsummary(data)\n",
             R = "bundled",
             vars = NULL,
             output = "noEcho",
@@ -23,7 +23,7 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..code <- jmvcore::OptionString$new(
                 "code",
                 code,
-                default="\nhead(data)\n",
+                default="\nsummary(data)\n",
                 hidden=TRUE)
             private$..R <- jmvcore::OptionList$new(
                 "R",
@@ -63,8 +63,6 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 toggle,
                 default=FALSE,
                 hidden=TRUE)
-            private$..createdColumns <- jmvcore::OptionOutput$new(
-                "createdColumns")
 
             self$.addOption(private$..code)
             self$.addOption(private$..R)
@@ -73,7 +71,6 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..figWidth)
             self$.addOption(private$..figHeight)
             self$.addOption(private$..toggle)
-            self$.addOption(private$..createdColumns)
         }),
     active = list(
         code = function() private$..code$value,
@@ -82,8 +79,7 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         output = function() private$..output$value,
         figWidth = function() private$..figWidth$value,
         figHeight = function() private$..figHeight$value,
-        toggle = function() private$..toggle$value,
-        createdColumns = function() private$..createdColumns$value),
+        toggle = function() private$..toggle$value),
     private = list(
         ..code = NA,
         ..R = NA,
@@ -91,8 +87,7 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..output = NA,
         ..figWidth = NA,
         ..figHeight = NA,
-        ..toggle = NA,
-        ..createdColumns = NA)
+        ..toggle = NA)
 )
 
 RjpResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -151,7 +146,7 @@ RjpBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @export
 Rjp <- function(
     data,
-    code = "\nhead(data)\n",
+    code = "\nsummary(data)\n",
     R = "bundled",
     vars,
     output = "noEcho",

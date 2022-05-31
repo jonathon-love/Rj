@@ -14,7 +14,7 @@ options:
     - name: code
       default: |
 
-        head(data)
+        summary(data)
 
       type: String
       hidden: true
@@ -60,12 +60,5 @@ options:
       type: Bool
       default: false
       hidden: true
-
-    - name: createdColumns
-      title: Save columns
-      type: Output
-      # default: true
-      hidden: false
-
 
 ...

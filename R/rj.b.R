@@ -2,6 +2,9 @@
 RjClass <- R6::R6Class(
     "RjClass",
     inherit = RjBase,
+    active=list(
+        saveColumns=function() FALSE
+    ),
     private = list(
         .run = function() {
 
@@ -14,8 +17,9 @@ RjClass <- R6::R6Class(
 
             if (self$options$R == 'bundled') {
 
-                eval(code, self$options, self$data, echo, self$results,
-                     figWidth=figWidth, figHeight=figHeight)
+                eval(code, self$data, echo, self$results,
+                     figWidth=figWidth, figHeight=figHeight,
+                     saveColumns=self$saveColumns)
 
             } else {
 
@@ -36,6 +40,11 @@ RjClass <- R6::R6Class(
                 script <- sub('{{FIGWIDTH}}', figWidth, script, fixed=TRUE)
                 script <- sub('{{FIGHEIGHT}}', figHeight, script, fixed=TRUE)
                 script <- sub('{{ECHO}}', echo, script, fixed=TRUE)
+
+                columns <- deparse(self$options$get('vars'))
+                script <- sub('{{COLUMNS}}', columns, script, fixed=TRUE)
+
+                script <- sub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
 
                 R <- private$.findR()
 

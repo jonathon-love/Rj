@@ -29,7 +29,7 @@ library('methods')  # necessary on windows for some reason
 if (inherits(result, 'try-error')) {
     reportError(result)
 } else {
-    result <- try(jmvconnect:::evalRemote("{{CODE}}", "{{DATASET}}", {{ECHO}}, "{{OUTPATH}}", figWidth="{{FIGWIDTH}}", figHeight="{{FIGHEIGHT}}"), silent=TRUE)
+    result <- try(jmvconnect:::evalRemote("{{CODE}}", "{{DATASET}}", {{ECHO}}, "{{OUTPATH}}", figWidth="{{FIGWIDTH}}", figHeight="{{FIGHEIGHT}}", columns={{COLUMNS}}, saveColumns={{SAVECOLUMNS}}), silent=TRUE)
     if (inherits(result, 'try-error')) {
         reportError(result)
     } else {
