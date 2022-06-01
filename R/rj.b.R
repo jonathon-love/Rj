@@ -34,17 +34,17 @@ RjClass <- R6::R6Class(
 
                 script <- readLines(scriptPath)
                 script <- paste0(script, collapse='\n')
-                script <- sub('{{CODE}}', code, script, fixed=TRUE)
-                script <- sub('{{DATASET}}', datasetPath, script, fixed=TRUE)
-                script <- sub('{{OUTPATH}}', outputPath, script, fixed=TRUE)
-                script <- sub('{{FIGWIDTH}}', figWidth, script, fixed=TRUE)
-                script <- sub('{{FIGHEIGHT}}', figHeight, script, fixed=TRUE)
-                script <- sub('{{ECHO}}', echo, script, fixed=TRUE)
+                script <- gsub('{{CODE}}', code, script, fixed=TRUE)
+                script <- gsub('{{DATASET}}', datasetPath, script, fixed=TRUE)
+                script <- gsub('{{OUTPATH}}', outputPath, script, fixed=TRUE)
+                script <- gsub('{{FIGWIDTH}}', figWidth, script, fixed=TRUE)
+                script <- gsub('{{FIGHEIGHT}}', figHeight, script, fixed=TRUE)
+                script <- gsub('{{ECHO}}', echo, script, fixed=TRUE)
 
                 columns <- deparse(self$options$get('vars'))
-                script <- sub('{{COLUMNS}}', columns, script, fixed=TRUE)
+                script <- gsub('{{COLUMNS}}', columns, script, fixed=TRUE)
 
-                script <- sub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
+                script <- gsub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
 
                 R <- private$.findR()
 
