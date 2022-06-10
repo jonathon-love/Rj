@@ -22,7 +22,7 @@ result <- try({
     if (packageVersion('jmvconnect') < '1.0.7')
         stop('To use the system R from jamovi, a newer version of jmvconnect is required', call.=FALSE)
 
-    if ({{SAVECOLUMNS}} && packageVersion('jmvconnect') < '2.3.12')
+    if ({{SAVECOLUMNS}} && packageVersion('jmvconnect') < '2.3.13')
         stop('To use the system R with Rj Editor+, a newer version of jmvconnect is required', call.=FALSE)
 
 }, silent=TRUE)

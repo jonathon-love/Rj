@@ -129,12 +129,16 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
         descs <- character()
         types <- character()
 
+        i <- 1
+
         for (columnName in colnames(data)) {
             if (columnName %in% origColumnNames)
                 next()
             column <- data[[columnName]]
-            keys <- c(keys, columnName)
+            keys <- c(keys, as.character(i))
             names <- c(names, columnName)
+
+            i <- i + 1
 
             desc <- attr(column, 'jmv-desc')
             if (is.null(desc))
@@ -154,8 +158,11 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
 
         output$set(keys, names, descs, types)
 
-        for (key in keys)
-            output$setValues(key=key, data[[key]])
+        i <- 1
+        for (name in names) {
+            output$setValues(key=as.character(i), data[[name]])
+            i <- i + 1
+        }
     }
 
     root
