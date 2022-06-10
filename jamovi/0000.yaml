@@ -4,7 +4,7 @@ name: Rj
 version: 2.0.3
 jms: '1.0'
 usesNative: true
-minApp: 1.8.0
+minApp: 2.3.12
 authors:
   - Jonathon Love
 maintainer: Jonathon Love <jon@thon.cc>

@@ -63,6 +63,8 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 toggle,
                 default=FALSE,
                 hidden=TRUE)
+            private$..createdColumns <- jmvcore::OptionOutput$new(
+                "createdColumns")
 
             self$.addOption(private$..code)
             self$.addOption(private$..R)
@@ -71,6 +73,7 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..figWidth)
             self$.addOption(private$..figHeight)
             self$.addOption(private$..toggle)
+            self$.addOption(private$..createdColumns)
         }),
     active = list(
         code = function() private$..code$value,
@@ -79,7 +82,8 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         output = function() private$..output$value,
         figWidth = function() private$..figWidth$value,
         figHeight = function() private$..figHeight$value,
-        toggle = function() private$..toggle$value),
+        toggle = function() private$..toggle$value,
+        createdColumns = function() private$..createdColumns$value),
     private = list(
         ..code = NA,
         ..R = NA,
@@ -87,7 +91,8 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..output = NA,
         ..figWidth = NA,
         ..figHeight = NA,
-        ..toggle = NA)
+        ..toggle = NA,
+        ..createdColumns = NA)
 )
 
 RjpResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(

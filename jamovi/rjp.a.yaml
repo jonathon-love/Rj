@@ -61,4 +61,9 @@ options:
       default: false
       hidden: true
 
+    - name: createdColumns
+      type: Output
+      default: true
+      hidden: true
+
 ...
