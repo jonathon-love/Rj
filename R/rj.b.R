@@ -41,7 +41,10 @@ RjClass <- R6::R6Class(
                 script <- gsub('{{FIGHEIGHT}}', figHeight, script, fixed=TRUE)
                 script <- gsub('{{ECHO}}', echo, script, fixed=TRUE)
 
-                columns <- deparse(self$options$get('vars'))
+                columns <- self$options$get('vars')
+                if (is.null(columns))
+                    columns <- character()
+                columns <- deparse(columns)
                 script <- gsub('{{COLUMNS}}', columns, script, fixed=TRUE)
 
                 script <- gsub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
