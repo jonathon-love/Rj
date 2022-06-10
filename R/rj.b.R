@@ -64,7 +64,11 @@ RjClass <- R6::R6Class(
 
                 if (Sys.info()['sysname'] == 'Windows') {
 
-                    Sys.setenv(R_LIBS_USER='~/R/win-library/%v')
+                    pathA = file.path(rappdirs::user_data_dir(), 'R', 'win-library', '%v')
+                    pathB = file.path(Sys.getenv('USERPROFILE'), 'R', 'win-library', '%v')
+                    libPaths = paste(pathA, pathB, sep=';')
+
+                    Sys.setenv(R_LIBS_USER=libPaths)
 
                     result <- system2(
                         command='c:\\windows\\system32\\cmd.exe',
