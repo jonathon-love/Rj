@@ -163,6 +163,10 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
             output$setValues(key=as.character(i), data[[name]])
             i <- i + 1
         }
+
+        rowNums <- as.integer(rownames(data))
+        if ( ! any(is.na(rowNums)))
+            output$setRowNums(rowNums)
     }
 
     root
