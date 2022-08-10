@@ -41,15 +41,21 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
 
         } else {
 
-            results <- jmvcore::Preformatted$new(options, paste(env$count))
+            if (inherits(object, 'shiny.tag')) {
+                results <- jmvcore::Html$new(options, paste(env$count))
+            } else {
+                results <- jmvcore::Preformatted$new(options, paste(env$count))
+            }
+            
             env$count <- env$count + 1
             env$last <- NULL
             root$add(results)
 
-            if (is.character(object) && ! capture) {
+            if (inherits(object, 'shiny.tag')) {
                 value <- object
-            }
-            else {
+            } else if (is.character(object) && ! capture) {
+                value <- object
+            } else {
                 value <- capture.output(object)
             }
 
