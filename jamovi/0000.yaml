@@ -1,7 +1,7 @@
 ---
 title: Rj - Editor to run R code inside jamovi
 name: Rj
-version: 2.0.5
+version: 2.0.6
 jms: '1.0'
 usesNative: true
 minApp: 2.3.13
