@@ -1,12 +1,13 @@
 ---
 title: Rj - Editor to run R code inside jamovi
 name: Rj
-version: 2.0.6
+version: 2.0.7
 jms: '1.0'
 usesNative: true
 minApp: 2.3.13
 authors:
   - Jonathon Love
+  - Maurizio Agosti
 maintainer: Jonathon Love <jon@thon.cc>
 type: R
 description: >-
