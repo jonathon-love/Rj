@@ -64,9 +64,16 @@ RjClass <- R6::R6Class(
 
                 if (Sys.info()['sysname'] == 'Windows') {
 
-                    pathA = file.path(rappdirs::user_data_dir(), 'R', 'win-library', '%v')
-                    pathB = file.path(Sys.getenv('USERPROFILE'), 'R', 'win-library', '%v')
-                    libPaths = paste(pathA, pathB, sep=';')
+                    rcv <- package_version(R$rcv)
+
+                    if (rcv > package_version('4.1.3')) {
+                        libPaths=file.path(rappdirs::user_data_dir(), 'R', 'win-library', '%v')
+                    } else {
+                        libPaths=file.path(Sys.getenv('USERPROFILE'), 'Documents', 'R', 'win-library', '%v')
+                    }
+
+                    if ( ! file.exists(libPaths))
+                        stop('Could not find system R library')
 
                     Sys.setenv(R_LIBS_USER=libPaths)
 
@@ -74,7 +81,7 @@ RjClass <- R6::R6Class(
                         command='c:\\windows\\system32\\cmd.exe',
                         args=c(
                             '/c',
-                            dQuote(R),
+                            dQuote(R$path),
                             '--no-save',
                             '--no-restore',
                             '--slave'),
@@ -85,7 +92,7 @@ RjClass <- R6::R6Class(
                 } else {
 
                     result <- system2(
-                        command=R,
+                        command=R$path,
                         args=c(
                             '--no-save',
                             '--no-restore',
@@ -155,33 +162,56 @@ RjClass <- R6::R6Class(
                 path <- file.path(path, 'Resources', 'bin', 'R')
 
                 if (file.exists(path))
-                    return(path)
+                    return(list(path=path))
                 if (file.exists('/usr/bin/R'))
-                    return('/usr/bin/R')
+                    return(list(path='/usr/bin/R'))
                 if (file.exists('/usr/local/bin/R'))
-                    return('/usr/local/bin/R')
+                    return(list(path='/usr/local/bin/R'))
                 if (file.exists('/opt/local/bin/R'))
-                    return('/opt/local/bin/R')
+                    return(list(path='/opt/local/bin/R'))
 
             } else if (os == 'Windows') {
 
-                entries <- try(readRegistry('Software\\R-core\\R', 'HLM'))
-                if (inherits(entries, 'try-error'))
-                    stop('Could not find system R (no appropriate registry entries)')
-                home <- entries$InstallPath
-                path <- file.path(home, 'bin', 'x64', 'R.exe')
-                if (file.exists(path))
-                    return(path)
+                regHLM <- file.path("SOFTWARE", "R-core", "R64", fsep = "\\")
+                entries <- try(readRegistry(regHLM,
+                                            hive = "HLM",
+                                            maxdepth = 2,
+                                            view = "64-bit"))
+
+                if (inherits(entries, 'try-error') || is.null(entries$`Current Version`) || is.null(entries$InstallPath)) {
+
+                    # trim from right
+                    ssDx <- function(x, n) {sapply(x, function(xx) substr(xx, (nchar(xx)-n+1), nchar(xx)) )}
+
+                    path <- file.path(entries[[1]]$InstallPath)
+                    rcv <- ssDx(path, 5)
+
+                    path <- file.path(path,
+                                      'bin',
+                                      'x64',
+                                      'R.exe')
+                } else {
+                    rcv <- entries$`Current Version`
+                    path <- file.path(entries$InstallPath, 'bin', 'x64', 'R.exe')
+                }
+
+                path <- gsub('/', '\\', path, fixed=TRUE)
+
+                if (file.exists(path)) {
+                    results <- list(path=path, rcv=rcv)
+                    return(results)
+                }
+
                 stop('Could not find system R (registry entries are incorrect)')
 
             } else {
                 path <- system2('which', args='R', stdout=TRUE)
                 if (file.exists(path))
-                    return(path)
+                    return(list(path=path))
                 if (file.exists('/usr/bin/R'))
-                    return('/usr/bin/R')
+                    return(list(path='/usr/bin/R'))
                 if (file.exists('/usr/local/bin/R'))
-                    return('/usr/local/bin/R')
+                    return(list(path='/usr/local/bin/R'))
             }
 
             stop('Could not find system R')
