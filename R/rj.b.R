@@ -72,9 +72,6 @@ RjClass <- R6::R6Class(
                         libPaths=file.path(Sys.getenv('USERPROFILE'), 'Documents', 'R', 'win-library', '%v')
                     }
 
-                    if ( ! file.exists(libPaths))
-                        stop('Could not find system R library')
-
                     Sys.setenv(R_LIBS_USER=libPaths)
 
                     result <- system2(
