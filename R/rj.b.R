@@ -175,7 +175,10 @@ RjClass <- R6::R6Class(
                                             maxdepth = 2,
                                             view = "64-bit"))
 
-                if (inherits(entries, 'try-error') || is.null(entries$`Current Version`) || is.null(entries$InstallPath)) {
+                if (inherits(entries, 'try-error'))
+                    stop('Windows registry entries are incorrect')
+
+                if (is.null(entries$`Current Version`) || is.null(entries$InstallPath)) {
 
                     # trim from right
                     ssDx <- function(x, n) {sapply(x, function(xx) substr(xx, (nchar(xx)-n+1), nchar(xx)) )}
@@ -199,7 +202,7 @@ RjClass <- R6::R6Class(
                     return(results)
                 }
 
-                stop('Could not find system R (registry entries are incorrect)')
+                stop('Could not find system R')
 
             } else {
                 path <- system2('which', args='R', stdout=TRUE)
