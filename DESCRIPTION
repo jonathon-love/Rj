@@ -10,4 +10,5 @@ License: GPL >= 2
 Encoding: UTF-8
 LazyData: true
 Imports: jmvcore (>= 1.8.0), evaluate, R6, dplyr
+Remotes: sjentsch/jmvReadWrite
 Suggests: tidyverse, rio
