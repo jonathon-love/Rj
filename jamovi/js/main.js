@@ -134,6 +134,10 @@ const events = {
                     event.preventDefault();
                 }
             }
+            else if (event.command.name === 'paste') {
+                // some times these extra kookie characters show up
+                event.args.text = event.args.text.replace(/[\r\u200B-\u200D\uFEFF]/g, '');
+            }
         });
 
         // clear the default completers
@@ -188,6 +192,7 @@ const events = {
         this.run = async(ui) => {
 
             let script = this.currentSession.getDocument().getValue();
+            script = script.replace(/[\r\u200B-\u200D\uFEFF]/g, '');
 
             let columns = [ ];
             if (window.name === 'Rj-Rj')
