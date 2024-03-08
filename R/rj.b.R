@@ -166,6 +166,10 @@ RjClass <- R6::R6Class(
                     return(list(path='/usr/local/bin/R'))
                 if (file.exists('/opt/local/bin/R'))
                     return(list(path='/opt/local/bin/R'))
+                else
+                    path <- system('which r')
+                    if (file.exists(path))
+                        return(list(path=path))
 
             } else if (os == 'Windows') {
 
