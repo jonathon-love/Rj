@@ -166,11 +166,13 @@ RjClass <- R6::R6Class(
                     return(list(path='/usr/local/bin/R'))
                 if (file.exists('/opt/local/bin/R'))
                     return(list(path='/opt/local/bin/R'))
-                else
-                    path <- system('which r')
-                    if (file.exists(path))
-                        return(list(path=path))
 
+                path <- try(system2('which', args='R', stdout=TRUE), silent = TRUE)
+                if (!inherits(path, "try-error")) {
+                    if (!is.na(path) && file.exists(path)) {
+                        return(list(path=path))
+                    }
+                }
             } else if (os == 'Windows') {
 
                 regHLM <- file.path("SOFTWARE", "R-core", "R64", fsep = "\\")
