@@ -3,8 +3,6 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
 
     eval.env <- new.env()
 
-    script <- gsub('\r\n', '\n', script)
-
     if ( ! missing(data))
         eval.env$data <- data
 
