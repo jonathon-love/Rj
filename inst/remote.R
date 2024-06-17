@@ -1,6 +1,6 @@
 
 if (Sys.info()['sysname'] == 'Windows') {
-    Sys.setlocale('LC_ALL', 'English_United States.1252')
+    Sys.setlocale('LC_ALL', '.UTF-8')
 } else {
     Sys.setlocale('LC_ALL', 'en_US.UTF-8')
 }
