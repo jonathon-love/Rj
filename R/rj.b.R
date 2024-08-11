@@ -44,7 +44,7 @@ RjClass <- R6::R6Class(
                 columns <- self$options$get('vars')
                 if (is.null(columns))
                     columns <- character()
-                columns <- deparse(columns)
+                columns <- deparse1(columns)
                 script <- gsub('{{COLUMNS}}', columns, script, fixed=TRUE)
 
                 script <- gsub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
