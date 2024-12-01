@@ -149,7 +149,7 @@ RjClass <- R6::R6Class(
             print(recordedPlot)
             TRUE
         },
-        .findR=function() {
+        .findR = function() {
 
             os <- Sys.info()[['sysname']]
 
@@ -159,59 +159,70 @@ RjClass <- R6::R6Class(
                 path <- file.path(path, 'Resources', 'bin', 'R')
 
                 if (file.exists(path))
-                    return(list(path=path))
+                    return(list(path = path))
                 if (file.exists('/usr/bin/R'))
-                    return(list(path='/usr/bin/R'))
+                    return(list(path = '/usr/bin/R'))
                 if (file.exists('/usr/local/bin/R'))
-                    return(list(path='/usr/local/bin/R'))
+                    return(list(path = '/usr/local/bin/R'))
                 if (file.exists('/opt/local/bin/R'))
-                    return(list(path='/opt/local/bin/R'))
+                    return(list(path = '/opt/local/bin/R'))
 
             } else if (os == 'Windows') {
 
+                # Helper function: trim version from path (if needed)
+                ssDx <- function(x, n) {
+                    sapply(x, function(xx) substr(xx, (nchar(xx) - n + 1), nchar(xx)))
+                }
+
+                # Try HKEY_LOCAL_MACHINE first
                 regHLM <- file.path("SOFTWARE", "R-core", "R64", fsep = "\\")
                 entries <- try(readRegistry(regHLM,
                                             hive = "HLM",
                                             maxdepth = 2,
                                             view = "64-bit"))
 
-                if (inherits(entries, 'try-error'))
-                    stop('Windows registry entries are incorrect')
-
-                if (is.null(entries$`Current Version`) || is.null(entries$InstallPath)) {
-
-                    # trim from right
-                    ssDx <- function(x, n) {sapply(x, function(xx) substr(xx, (nchar(xx)-n+1), nchar(xx)) )}
-
-                    path <- file.path(entries[[1]]$InstallPath)
-                    rcv <- ssDx(path, 5)
-
-                    path <- file.path(path,
-                                      'bin',
-                                      'x64',
-                                      'R.exe')
-                } else {
-                    rcv <- entries$`Current Version`
-                    path <- file.path(entries$InstallPath, 'bin', 'x64', 'R.exe')
+                # If not found, try HKEY_CURRENT_USER
+                if (inherits(entries, 'try-error')) {
+                    regHCU <- file.path("SOFTWARE", "R-core", "R64", fsep = "\\")
+                    entries <- try(readRegistry(regHCU,
+                                                hive = "HCU",
+                                                maxdepth = 2,
+                                                view = "64-bit"))
                 }
 
-                path <- gsub('/', '\\', path, fixed=TRUE)
+                # If entries are invalid or missing
+                if (inherits(entries, 'try-error')) {
+                    stop("Could not find R installation in the Windows registry (HLM or HCU)")
+                }
 
+                # Extract version and path
+                rcv <- entries$`Current Version`
+                path <- file.path(entries$InstallPath, "bin", "x64", "R.exe")
+
+                # If InstallPath is nested, check for alternate structure
+                if (is.null(entries$InstallPath) && !is.null(entries[[1]])) {
+                    path <- file.path(entries[[1]]$InstallPath, "bin", "x64", "R.exe")
+                    rcv <- ssDx(path, 5)  # Extract version (e.g., "4.4.2")
+                }
+
+                # Normalize the path for Windows
+                path <- gsub("/", "\\", path, fixed = TRUE)
+
+                # Validate the path
                 if (file.exists(path)) {
-                    results <- list(path=path, rcv=rcv)
-                    return(results)
+                    return(list(path = path, rcv = rcv))
                 }
 
-                stop('Could not find system R')
+                stop("Could not locate R.exe at the specified registry path")
 
-            } else {
-                path <- system2('which', args='R', stdout=TRUE)
+            } else {  # For Linux and other Unix-like systems
+                path <- system2('which', args = 'R', stdout = TRUE)
                 if (file.exists(path))
-                    return(list(path=path))
+                    return(list(path = path))
                 if (file.exists('/usr/bin/R'))
-                    return(list(path='/usr/bin/R'))
+                    return(list(path = '/usr/bin/R'))
                 if (file.exists('/usr/local/bin/R'))
-                    return(list(path='/usr/local/bin/R'))
+                    return(list(path = '/usr/local/bin/R'))
             }
 
             stop('Could not find system R')
