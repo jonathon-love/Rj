@@ -1,7 +1,7 @@
 ---
 title: Rj - Editor to run R code inside jamovi
 name: Rj
-version: 2.5.7
+version: 2.5.8
 jms: '1.0'
 usesNative: true
 minApp: 2.5.0
@@ -21,6 +21,7 @@ analyses:
     menuTitle: Rj Editor
     menuSubgroup: Rj
     arbitraryCode: true
+    arbitraryCode2: true
   - title: Rj Editor +
     name: Rjp
     ns: Rj
@@ -28,5 +29,6 @@ analyses:
     menuSubgroup: Rj
     menuTitle: Rj Editor +
     arbitraryCode: true
+    arbitraryCode2: true
 
 ...
