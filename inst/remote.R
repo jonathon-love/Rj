@@ -16,7 +16,7 @@ openNew <- function(data = NULL, title = "") {
         if (Sys.info()[['sysname']] %in% c("Darwin", "Windows")) {
             cat("openNew() requires that jmvReadWrite is installed in your system R installation.")
         } else {
-            cat("openNew() is only available under jamovi R on Linux / UNIX-like systems.")
+            cat("openNew() is not available under 'system R' on Linux systems.")
         }
     }
 }
