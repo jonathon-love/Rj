@@ -7,7 +7,7 @@ if (Sys.info()['sysname'] == 'Windows') {
 
 openNew <- function(data = NULL, title = "") {
     if (requireNamespace("jmvReadWrite", quietly = TRUE)) {
-        if (packageVersion("jmvReadWrite") > '0.4.9') {
+        if (packageVersion("jmvReadWrite") > '0.4.10') {
             jmvReadWrite:::jmvOpn(dtaFrm = data, dtaTtl = title, rtnOut = FALSE)
         } else {
             cat('To use the system R from jamovi, a newer version of jmvReadWrite (> 0.4.9) is required.')
