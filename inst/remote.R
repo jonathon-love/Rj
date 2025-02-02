@@ -5,6 +5,22 @@ if (Sys.info()['sysname'] == 'Windows') {
     Sys.setlocale('LC_ALL', 'en_US.UTF-8')
 }
 
+openNew <- function(data = NULL, title = "") {
+    if (requireNamespace("jmvReadWrite", quietly = TRUE)) {
+        if (packageVersion("jmvReadWrite") > '0.4.10') {
+            jmvReadWrite:::jmvOpn(dtaFrm = data, dtaTtl = title, rtnOut = FALSE)
+        } else {
+            cat('To use the system R from jamovi, a newer version of jmvReadWrite (> 0.4.9) is required.')
+        }        
+    } else {
+        if (Sys.info()[['sysname']] %in% c("Darwin", "Windows")) {
+            cat("openNew() requires that jmvReadWrite is installed in your system R installation.")
+        } else {
+            cat("openNew() is not available under 'system R' on Linux systems.")
+        }
+    }
+}
+
 reportError <- function(result) {
     error <- attr(result, 'condition')
     if ( ! is.null(error$message)) {

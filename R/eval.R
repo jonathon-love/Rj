@@ -177,3 +177,7 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
 
     root
 }
+
+openNew <- function(data = NULL, title = "") {
+    jmvReadWrite:::jmvOpn(dtaFrm = data, dtaTtl = title, rtnOut = FALSE)
+}
