@@ -14,6 +14,14 @@ const SuggestIcons = require('./suggesticons');
 // snippetManager.register(snippets, 'r');
 
 
+function arrayEquals(a, b) {
+    return Array.isArray(a) &&
+        Array.isArray(b) &&
+        a.length === b.length &&
+        a.every((val, index) => val === b[index]);
+}
+
+
 const events = {
     loaded(ui) {
 
@@ -266,7 +274,7 @@ const events = {
             return;
         this.getColumnNames().then((columns) => {
             let old = ui.vars.value();
-            if ( ! _.isEqual(old, columns))
+            if ( ! arrayEquals(old, columns))
                 ui.vars.setValue(columns);
         });
     },
