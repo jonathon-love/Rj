@@ -27,11 +27,11 @@ const events = {
 
         this.editSessions = { };
 
-        let $contents = ui.view.$el;
-        $contents.css('display', 'flex');
-        $contents.css('flex-direction', 'column');
+        let $contents = ui.view.el;
+        $contents.style.display = 'flex';
+        $contents.style.flexDirection = 'column';
 
-        $contents.append(`
+        $contents.insertAdjacentHTML('beforeend', `
             <div id="editor-box">
                 <div id="toolbar">
                     <div id="config" title="Configuration"></div>
@@ -41,8 +41,8 @@ const events = {
                 <div id="info">Ctrl + Shift + Enter to run</div>
             </div>`);
 
-        let $config = $contents.find('#config');
-        $config.append(`
+        let $config = $contents.querySelector('#config');
+        $config.innerHTML = `
             <div id="menu">
                 <label id="r-label">R Version</label>
                 <select id="r-version">
@@ -61,44 +61,44 @@ const events = {
                     <label>Height</label>
                     <input id="figure-height" placeholder="Default">
                 </div>
-            </div>`);
+            </div>`;
 
-        this.$editor = $contents.find('#editor');
-        this.$run = $contents.find('#run');
-        this.$menu = $contents.find('#menu');
+        this.$editor = $contents.querySelector('#editor');
+        this.$run = $contents.querySelector('#run');
+        this.$menu = $contents.querySelector('#menu');
 
-        this.$run.on('click', () => this.run(ui));
+        this.$run.addEventListener('click', () => this.run(ui));
 
-        this.$output = $config.find('#output');
-        this.$output.on('change', (event) => {
-            ui.output.setValue(this.$output.val());
+        this.$output = $config.querySelector('#output');
+        this.$output.addEventListener('change', (event) => {
+            ui.output.setValue(this.$output.value);
         });
 
-        this.$r = $config.find('#r-version');
-        this.$r.on('change', (event) => {
-            ui.R.setValue(this.$r.val());
+        this.$r = $config.querySelector('#r-version');
+        this.$r.addEventListener('change', (event) => {
+            ui.R.setValue(this.$r.value);
         });
 
-        this.$figWidth = $config.find('#figure-width');
-        this.$figHeight = $config.find('#figure-height');
+        this.$figWidth = $config.querySelector('#figure-width');
+        this.$figHeight = $config.querySelector('#figure-height');
 
-        this.$menu.find('input').on('keyup', (event) => {
+        this.$menu.querySelectorAll('input').forEach(el => el.addEventListener('keyup', (event) => {
             if (event.keyCode == 13)
                 this.run(ui);
-        });
+        }));
 
-        $config.on('click', (event) => {
-            if (event.target === $config[0])
+        $config.addEventListener('click', (event) => {
+            if (event.target === $config)
                 this.toggleMenu(ui);
         });
 
-        this.$editor.on('click', () => {
+        this.$editor.addEventListener('click', () => {
             this.hideMenu(ui);
         });
 
         if (navigator.platform === 'MacIntel') {
-            let $info = $contents.find('#info');
-            $info.text('\u2318 + Shift + Enter to run');
+            let $info = $contents.querySelector('#info');
+            $info.textContent = '\u2318 + Shift + Enter to run';
         }
 
         this.editor = ace.edit('editor');
@@ -176,24 +176,24 @@ const events = {
         };
 
         this.toggleMenu = (ui) => {
-            if ( ! this.$menu.hasClass('visible'))
+            if ( ! this.$menu.classList.contains('visible'))
                 this.showMenu(ui);
             else
                 this.hideMenu(ui);
         };
 
         this.showMenu = (ui) => {
-            this.$menu.addClass('visible');
+            this.$menu.classList.add('visible');
         };
 
         this.hideMenu = (ui) => {
-            this.$menu.removeClass('visible');
+            this.$menu.classList.remove('visible');
 
             ui.view.model.options.beginEdit();
-            ui.figWidth.setValue(this.$figWidth.val());
-            ui.figHeight.setValue(this.$figHeight.val());
-            ui.output.setValue(this.$output.val());
-            ui.R.setValue(this.$r.val());
+            ui.figWidth.setValue(this.$figWidth.value);
+            ui.figHeight.setValue(this.$figHeight.value);
+            ui.output.setValue(this.$output.value);
+            ui.R.setValue(this.$r.value);
             ui.view.model.options.endEdit();
         };
 
@@ -208,10 +208,10 @@ const events = {
 
             ui.view.model.options.beginEdit();
 
-            ui.figWidth.setValue(this.$figWidth.val());
-            ui.figHeight.setValue(this.$figHeight.val());
-            ui.output.setValue(this.$output.val());
-            ui.R.setValue(this.$r.val());
+            ui.figWidth.setValue(this.$figWidth.value);
+            ui.figHeight.setValue(this.$figHeight.value);
+            ui.output.setValue(this.$output.value);
+            ui.R.setValue(this.$r.value);
 
             if (window.name === 'Rj-Rj') {
                 let match = script.match(/^\s*\#\s*\((.*)\)/);
@@ -243,7 +243,7 @@ const events = {
             this.editor.focus();
         };
 
-        this.$editor.on('keydown', (event) => {
+        this.$editor.addEventListener('keydown', (event) => {
 
             if (event.keyCode === 13 && (event.metaKey || event.ctrlKey) && event.shiftKey) {
                 // ctrl+shift+enter
@@ -293,10 +293,10 @@ const events = {
 
         this.editor.setSession(this.currentSession);
 
-        this.$figWidth.val(ui.figWidth.value());
-        this.$figHeight.val(ui.figHeight.value());
-        this.$output.val(ui.output.value());
-        this.$r.val(ui.R.value());
+        this.$figWidth.value = ui.figWidth.value();
+        this.$figHeight.value = ui.figHeight.value();
+        this.$output.value = ui.output.value();
+        this.$r.value = ui.R.value();
     },
 };
 
