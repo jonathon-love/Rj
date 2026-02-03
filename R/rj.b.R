@@ -169,11 +169,6 @@ RjClass <- R6::R6Class(
 
             } else if (os == 'Windows') {
 
-                # Helper function: trim version from path (if needed)
-                ssDx <- function(x, n) {
-                    sapply(x, function(xx) substr(xx, (nchar(xx) - n + 1), nchar(xx)))
-                }
-
                 # Try HKEY_LOCAL_MACHINE first
                 regHLM <- file.path("SOFTWARE", "R-core", "R64", fsep = "\\")
                 entries <- try(readRegistry(regHLM,
@@ -201,8 +196,11 @@ RjClass <- R6::R6Class(
 
                 # If InstallPath is nested, check for alternate structure
                 if (is.null(entries$InstallPath) && !is.null(entries[[1]])) {
-                    path <- file.path(entries[[1]]$InstallPath, "bin", "x64", "R.exe")
-                    rcv <- ssDx(path, 5)  # Extract version (e.g., "4.4.2")
+                    installPath <- entries[[1]]$InstallPath
+                    dirs <- strsplit(installPath, split='\\', fixed=TRUE)[[1]]
+                    rDir <- dirs[length(dirs)]
+                    rcv <- strsplit(rDir, '-', fixed=TRUE)[[1]][2]  # R-4.5.2 => 4.5.2
+                    path <- file.path(installPath, "bin", "x64", "R.exe")
                 }
 
                 # Normalize the path for Windows
