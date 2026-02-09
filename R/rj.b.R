@@ -74,24 +74,18 @@ RjClass <- R6::R6Class(
 
                     Sys.setenv(R_LIBS_USER=libPaths)
 
-                    # Fix for DLL CLEANUP (20260207 mz)
-                    cleanupCode <-
-                        '
+                    # Update cleanupCode only for "cli"
+                    cleanupCode <- '
                         tryCatch({
-                            dlls <- getLoadedDLLs()
-                            base_dlls <- c("base", "methods", "utils", "grDevices", "graphics", "stats", "R")
-                            for (dll_name in names(dlls)) {
-                                if (!dll_name %in% base_dlls) {
-                                    try({
-                                        dll_path <- dlls[[dll_name]][["path"]]
-                                        if (!is.null(dll_path) && nzchar(dll_path)) {
-                                            dyn.unload(dll_path)
-                                        }
-                                    }, silent=TRUE)
+                            try({
+                                cli_dll <- getLoadedDLLs()[["cli"]]
+                                if (!is.null(cli_dll)) {
+                                    dyn.unload(cli_dll[["path"]])
                                 }
-                            }
+                            }, silent=TRUE)
                         }, error=function(e) invisible(NULL))
                         '
+
                     script <- paste0(script, cleanupCode)
 
                     result <- system2(
