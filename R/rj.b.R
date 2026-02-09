@@ -74,6 +74,20 @@ RjClass <- R6::R6Class(
 
                     Sys.setenv(R_LIBS_USER=libPaths)
 
+                    # Update cleanupCode only for "cli"
+                    cleanupCode <- '
+                        tryCatch({
+                            try({
+                                cli_dll <- getLoadedDLLs()[["cli"]]
+                                if (!is.null(cli_dll)) {
+                                    dyn.unload(cli_dll[["path"]])
+                                }
+                            }, silent=TRUE)
+                        }, error=function(e) invisible(NULL))
+                        '
+
+                    script <- paste0(script, cleanupCode)
+
                     result <- system2(
                         command='c:\\windows\\system32\\cmd.exe',
                         args=c(
