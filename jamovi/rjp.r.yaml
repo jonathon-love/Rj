@@ -4,6 +4,18 @@ title: R
 jrs:   '1.1'
 
 items:
+  - name: omvExport
+    type: Html
+    title: ''
+    visible: false
+    clearWith: []
+
+  - name: dataextPreview
+    type: Html
+    title: External dataset preview
+    visible: false
+    clearWith: []
+
   - name: createdColumns
     type: Output
     initInRun: true

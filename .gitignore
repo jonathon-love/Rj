@@ -6,3 +6,13 @@ build/R*
 
 .DS_Store
 .Rproj.user
+
+# Local investigation/maintenance notes; public review documentation is separate.
+/docs/ANALISI_BASELINE_IT.md
+/docs/PROVA_ANTEPRIMA_WINDOWS_IT.md
+/docs/ROADMAP_RJ_RJP_IT.md
+/docs/ROADMAP_RISULTATI_IT.md
+/docs/FIGURE_DIMENSIONS_IT.md
+/docs/OMV_E_RISULTATI_IT.md
+__pycache__/
+*.pyc

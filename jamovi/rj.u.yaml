@@ -6,4 +6,7 @@ events:
   loaded: './main::loaded'
   update: './main::update'
   remoteDataChanged: './main::onDataChanged'
-children: []
+children:
+  - type: File
+    name: omvFile
+    label: OMV input

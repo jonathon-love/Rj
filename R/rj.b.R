@@ -6,11 +6,28 @@ RjClass <- R6::R6Class(
         saveColumns=function() FALSE
     ),
     private = list(
+        .editorUiOnly=FALSE,
+        .postInit=function() .mzRj_omvInfo(self),
         .run = function() {
+            if(.mzRj_omvAction(self)) return()
+            if (isTRUE(self$options$saveEditorScript)) {
+                .mzRj_saveEditor(self)
+                return()
+            }
+            if (private$.editorUiOnly)
+                return()
 
+            previousExternal <- .mzRj_omvState(self)
             self$results$clear()
+            .mzRj_omvRestore(self,previousExternal)
 
-            code <- self$options$code
+            if (isTRUE(self$options$editorCleared)) {
+                eval('', self$data, FALSE, self$results, saveColumns=self$saveColumns)
+                return()
+            }
+            context <- new.env(parent=emptyenv())
+            context$data <- .mzRj_dataext(self)
+            code <- .mzRj_editorCode(self)
             echo <- self$options$output == 'echo'
             figWidth  <- self$options$figWidth
             figHeight <- self$options$figHeight
@@ -19,12 +36,18 @@ RjClass <- R6::R6Class(
 
                 eval(code, self$data, echo, self$results,
                      figWidth=figWidth, figHeight=figHeight,
-                     saveColumns=self$saveColumns)
+                     saveColumns=self$saveColumns,dataextEnv=context)
 
             } else {
 
                 scriptPath <- system.file('remote.R', package='Rj', mustWork=TRUE)
                 outputPath <- tempfile()
+                dataextInput <- tempfile(fileext='.rds');dataextOutput <- tempfile(fileext='.rds')
+                evaluatorPath <- tempfile(fileext='.R')
+                on.exit(unlink(c(outputPath,dataextInput,dataextOutput,evaluatorPath)),add=TRUE)
+                saveRDS(context$data,dataextInput)
+                writeLines(c('.mzRj_eval <-',deparse(eval),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
+                    '. <- function(text) {value <- .mzRj_messages[[text]];if(is.null(value))text else value}'),evaluatorPath)
 
                 datasetPath <- gsub('\\', '/', .datasetPath, fixed=TRUE)
                 outputPath <- gsub('\\', '/', outputPath, fixed=TRUE)
@@ -34,7 +57,6 @@ RjClass <- R6::R6Class(
 
                 script <- readLines(scriptPath)
                 script <- paste0(script, collapse='\n')
-                script <- gsub('{{CODE}}', code, script, fixed=TRUE)
                 script <- gsub('{{DATASET}}', datasetPath, script, fixed=TRUE)
                 script <- gsub('{{OUTPATH}}', outputPath, script, fixed=TRUE)
                 script <- gsub('{{FIGWIDTH}}', figWidth, script, fixed=TRUE)
@@ -48,6 +70,10 @@ RjClass <- R6::R6Class(
                 script <- gsub('{{COLUMNS}}', columns, script, fixed=TRUE)
 
                 script <- gsub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
+                script <- gsub('{{EVALUATOR}}', deparse1(evaluatorPath), script, fixed=TRUE)
+                script <- gsub('{{DATAEXT_INPUT}}', deparse1(dataextInput), script, fixed=TRUE)
+                script <- gsub('{{DATAEXT_OUTPUT}}', deparse1(dataextOutput), script, fixed=TRUE)
+                script <- gsub('{{CODE}}', code, script, fixed=TRUE)
 
                 R <- private$.findR()
 
@@ -125,6 +151,7 @@ RjClass <- R6::R6Class(
 
                     } else if (line == 'OK') {
                         results <- readRDS(file=outputPath)
+                        context$data <- readRDS(dataextOutput)
                         for (item in results$items)
                             self$results$add(item)
                     }
@@ -139,6 +166,10 @@ RjClass <- R6::R6Class(
                 # text$setContent(result)
             }
 
+            .mzRj_stageDataext(self,context$data,if(is.null(previousExternal$source_name))'' else previousExternal$source_name)
+            .mzRj_omvInfo(self)
+            .mzRj_omvPreview(self)
+            .mzRj_bindImages(self)
         },
         .render=function(image, ...) {
             recordedPlot <- image$state
@@ -201,7 +232,7 @@ RjClass <- R6::R6Class(
 
                 # If entries are invalid or missing
                 if (inherits(entries, 'try-error')) {
-                    stop("Could not find R installation in the Windows registry (HLM or HCU)")
+                    stop(.("Could not find R installation in the Windows registry (HLM or HCU)"))
                 }
 
                 # Extract version and path
@@ -225,7 +256,7 @@ RjClass <- R6::R6Class(
                     return(list(path = path, rcv = rcv))
                 }
 
-                stop("Could not locate R.exe at the specified registry path")
+                stop(.("Could not locate R.exe at the specified registry path"))
 
             } else {  # For Linux and other Unix-like systems
                 path <- system2('which', args = 'R', stdout = TRUE)
@@ -237,7 +268,7 @@ RjClass <- R6::R6Class(
                     return(list(path = '/usr/local/bin/R'))
             }
 
-            stop('Could not find system R')
+            stop(.('Could not find system R'))
         }),
     public=list(
         asSource=function() {
@@ -247,6 +278,7 @@ RjClass <- R6::R6Class(
                 return('')
         },
         .load=function(vChanges=character()) {
+            private$.editorUiOnly <- FALSE
 
             jmvcore:::initProtoBuf()
 
@@ -260,25 +292,19 @@ RjClass <- R6::R6Class(
                 pb <- jmvcore:::RProtoBuf_read(jamovi.coms.AnalysisResponse, conn)
                 groupPB <- pb$results$group
 
-                for (itemPB in groupPB$elements) {
-                    if (itemPB$has('preformatted')) {
-                        self$results$add(jmvcore::Preformatted$new(
-                            self$options,
-                            name=itemPB$name,
-                            title=itemPB$title))
-                    } else if (itemPB$has('image')) {
-                        self$results$add(jmvcore::Image$new(
-                            self$options,
-                            name=itemPB$name,
-                            title=itemPB$title,
-                            renderFun='.render',
-                            width=itemPB$image$width,
-                            height=itemPB$image$height))
-                    }
-                }
-
                 oChanges <- private$.options$compProtoBuf(pb$options)
-                private$.results$fromProtoBuf(pb$results, oChanges, vChanges)
+                resizeChanges <- grep('^results/.+/(widthScale|heightScale|width|height)$',oChanges,value=TRUE)
+                resizeOnly <- length(vChanges)==0L && length(resizeChanges)>0L &&
+                    all(oChanges %in% c(resizeChanges,'editorState','createdColumns','dataextInfo'))
+                private$.editorUiOnly <- resizeOnly || (length(vChanges)==0L && length(oChanges)>0L &&
+                    all(oChanges %in% c('editorState','saveEditorScript','dataextInfo')))
+                saving <- isTRUE(self$options$saveEditorScript) || isTRUE(self$options$saveOmvFile) ||
+                    !is.null(self$options$omvFile) || isTRUE(self$options$previewDataextRequest) || private$.editorUiOnly
+                .mzRj_restoreResults(self, groupPB, if(saving)character() else '*', pb$options)
+                private$.results$fromProtoBuf(pb$results,
+                    if(saving)character() else oChanges,
+                    if(saving)character() else vChanges)
+                if(resizeOnly) .mzRj_resizeImages(self$results,groupPB,resizeChanges)
             }
 
             private$.clear(vChanges)
