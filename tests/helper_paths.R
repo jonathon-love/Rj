@@ -1,6 +1,7 @@
 # Optional overrides: MZRJ_TEST_LIBS and MZRJ_SYSTEM_RSCRIPT.
 # Normal use: run with jamovi R and pass the compiled source directory.
 mzRjTestPaths <- function(root) {
+ if(.Platform$OS.type=='windows')invisible(Sys.setlocale('LC_ALL','.UTF-8'))
  candidates<-list.dirs(file.path(root,'build'),recursive=FALSE,full.names=TRUE)
  candidates<-candidates[file.exists(file.path(candidates,'Rj','DESCRIPTION'))]
  runtime<-c(file.path(R.home(),'../../Resources/modules/base/R'),

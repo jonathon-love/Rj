@@ -1,6 +1,11 @@
 
-eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColumns=FALSE, dataextEnv=NULL, ...) {
+eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColumns=FALSE, dataextEnv=NULL, sourceInfo=NULL, ...) {
 
+    # The serialized evaluator has no Analysis/self frame in System R.
+    . <- function(text) {
+        value<-sourceInfo$messages[[text]]
+        if(is.null(value))text else value
+    }
     eval.env <- new.env()
     eval.env$dataext <- if(is.null(dataextEnv)) data.frame() else dataextEnv$data
 
@@ -81,9 +86,9 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
         root$add(item)
         invisible(NULL)
     }
-    eval.env$rjShowImage <- function(plot, width=NULL, height=NULL, name=NULL, title='')
+    eval.env$mzrjShowImage <- function(plot, width=NULL, height=NULL, name=NULL, title='')
         nativeGraphic(plot,width,height,name,title,'Image')
-    eval.env$rjShowSvg <- function(plot, width=NULL, height=NULL, name=NULL, title='')
+    eval.env$mzrjShowSvg <- function(plot, width=NULL, height=NULL, name=NULL, title='')
         nativeGraphic(plot,width,height,name,title,'Svg')
 
     text_handler <- function(object, capture=TRUE) {
@@ -119,6 +124,12 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
     }
 
     source_handler <- function(value) {
+        # evaluate sees a small dispatcher; Echo must show the user's source.
+        index <- suppressWarnings(as.integer(sub('.*\\(([0-9]+)L?\\).*','\\1',value$src)))
+        if(length(index)==1L&&!is.na(index)&&index>=1L&&index<=length(env$expressions)) {
+            env$activeIndex <- index
+            value$src <- env$echoText[[index]]
+        }
         if ( ! env$echo)
             return()
 
@@ -169,11 +180,100 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
     # prevents a flashing window on windows
     options(device=function(...) pdf(file=NULL, ...))
 
-    data <- evaluate::evaluate(
-        input=script,
-        envir=eval.env,
-        output_handler=handler,
-        stop_on_error=2)
+    # Keep parser references: evaluate deliberately strips them from normal input.
+    # The dispatcher has its own environment, so rm(list=ls()) in user code
+    # cannot remove it. Each expression is still evaluated in the same user env.
+    if(is.null(sourceInfo))sourceInfo<-list()
+    label<-function(value,fallback)if(is.character(value)&&length(value)==1L&&
+        !is.na(value)&&nzchar(value))value else fallback
+    sources<-list(
+        service=list(id='<rj-service>',name=label(sourceInfo$serviceName,.('Service script')),
+                     code=label(sourceInfo$serviceCode,'')),
+        editor=list(id='<rj-editor>',name=label(sourceInfo$editorName,.('R editor')),code=script))
+    for(key in names(sources))sources[[key]]$lines<-strsplit(sources[[key]]$code,'\n',fixed=TRUE)[[1]]
+    location<-function(reference) {
+        if(is.null(reference)||!inherits(reference,'srcref'))return(NULL)
+        file<-attr(reference,'srcfile')$filename
+        for(source in sources)if(identical(file,source$id))
+            return(list(source=source,line=as.integer(reference)[1L]))
+        NULL
+    }
+    snippet<-function(where) {
+        line<-where$line;lines<-where$source$lines
+        if(!is.na(line)&&line>=1L&&line<=length(lines))paste0('    ',lines[[line]]) else ''
+    }
+    diagnostic<-function(error,where=NULL,syntax=FALSE,calls=list()) {
+        if(identical(error$code,'restart')||inherits(error,'interrupt'))return(error)
+        detail<-conditionMessage(error)
+        if(syntax)detail<-sub('^[^\n]*:[0-9]+:[0-9]+: *','',strsplit(detail,'\n',fixed=TRUE)[[1]][1])
+        found<-Filter(Negate(is.null),lapply(calls,function(call)location(attr(call,'srcref'))))
+        if(length(found)) {
+            if(!is.null(where))found<-c(list(where),found)
+            where<-tail(found,1)[[1]]
+        }
+        if(is.null(where))return(error) # Do not invent a line for external code.
+        heading<-paste0(where$source$name,' — ',.('line'),' ',where$line,
+                        ' — ',if(syntax).('Syntax error') else .('Error'),': ',detail)
+        excerpt<-snippet(where)
+        if(syntax&&!nzchar(excerpt)&&length(where$source$lines))
+            excerpt<-paste0('    ',length(where$source$lines),' | ',tail(where$source$lines,1L))
+        text<-c(heading,excerpt)
+        seen<-paste(where$source$id,where$line)
+        for(caller in rev(found)) {
+            id<-paste(caller$source$id,caller$line)
+            if(id %in% seen)next
+            seen<-c(seen,id)
+            text<-c(text,paste0(.('Called from'),' ',caller$source$name,' — ',.('line'),' ',caller$line),snippet(caller))
+        }
+        error$message<-paste(text[nzchar(text)],collapse='\n');error$call<-NULL
+        class(error)<-unique(c('mzrj_user_error',class(error)));error
+    }
+    parsed<-list()
+    # Validate both sources before running Service, as with the previous combined script.
+    for(key in names(sources)) {
+        source<-sources[[key]]
+        parsed[[key]]<-tryCatch(parse(text=source$code,
+            srcfile=srcfilecopy(source$id,source$lines),keep.source=TRUE),error=function(error){
+                numbers<-regmatches(conditionMessage(error),regexec('^.*?:([0-9]+):([0-9]+):',conditionMessage(error)))[[1]]
+                line<-if(length(numbers)>=2L)as.integer(numbers[2L]) else NA_integer_
+                if(is.na(line))stop(error)
+                stop(diagnostic(error,list(source=source,line=line),syntax=TRUE))
+            })
+    }
+    dispatch<-new.env(parent=eval.env)
+    dispatch$.mzrj_eval_step<-function(index)base::eval(env$expressions[[index]],envir=eval.env)
+    env$echoText<-character()
+    for(key in names(sources)) {
+        refs<-attr(parsed[[key]],'srcref');lines<-sources[[key]]$lines;previousEnd<-0L
+        for(i in seq_along(refs)) {
+            ref<-as.integer(refs[[i]]);text<-as.character(refs[[i]])
+            if(ref[1L]>previousEnd+1L)text<-c(lines[seq.int(previousEnd+1L,ref[1L]-1L)],text)
+            tail<-substring(lines[ref[3L]],ref[6L]+1L)
+            if(grepl('^\\s*#',tail))text[length(text)]<-paste0(text[length(text)],tail)
+            if(i==length(refs)&&ref[3L]<length(lines))text<-c(text,lines[seq.int(ref[3L]+1L,length(lines))])
+            env$echoText<-c(env$echoText,paste(text,collapse='\n'));previousEnd<-ref[3L]
+        }
+    }
+    env$expressions<-as.expression(c(as.list(parsed$service),as.list(parsed$editor)))
+    env$references<-c(attr(parsed$service,'srcref'),attr(parsed$editor,'srcref'))
+    if(!length(env$expressions)&&env$echo) {
+        for(source in sources)if(nzchar(trimws(source$code)))source_handler(list(src=source$code))
+    }
+    if(length(env$expressions)) {
+        env$activeIndex<-1L;env$failure<-NULL
+        captureError<-function(error) {
+            if(is.null(env$failure))env$failure<-diagnostic(error,
+                location(env$references[[env$activeIndex]]),calls=sys.calls())
+        }
+        handler$calling_handlers<-list(error=captureError)
+        input<-paste0('.mzrj_eval_step(',seq_along(env$expressions),'L)',collapse='\n')
+        tryCatch(evaluate::evaluate(input=input,envir=dispatch,output_handler=handler,
+            stop_on_error=2),error=function(error) {
+                if(identical(error$code,'restart'))stop(error)
+                if(!is.null(env$failure))stop(env$failure)
+                stop(diagnostic(error,location(env$references[[env$activeIndex]])))
+            })
+    }
 
     if(!is.null(dataextEnv))dataextEnv$data <- eval.env$dataext
     data <- eval.env$data

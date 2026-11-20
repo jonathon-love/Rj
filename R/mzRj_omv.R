@@ -93,7 +93,12 @@
     "openNew() requires that jmvReadWrite is installed in your system R installation."=.("openNew() requires that jmvReadWrite is installed in your system R installation."),
     "openNew() is not available under 'system R' on Linux systems."=.("openNew() is not available under 'system R' on Linux systems."),
     "Unknown error"=.("Unknown error"),
-    "To use the system R from jamovi, jmvconnect must be installed"=.("To use the system R from jamovi, jmvconnect must be installed"),
-    "To use the system R from jamovi, a newer version of jmvconnect is required"=.("To use the system R from jamovi, a newer version of jmvconnect is required"),
-    "To use the system R with Rj Editor+, a newer version of jmvconnect is required"=.("To use the system R with Rj Editor+, a newer version of jmvconnect is required")
+    "System R is missing required packages:"=.("System R is missing required packages:"),
+    "R editor"=.("R editor"), "Service script"=.("Service script"),
+    "line"=.("line"), "Error"=.("Error"),
+    "The plot argument must be a function with no arguments."=.("The plot argument must be a function with no arguments."),
+    "Figure dimensions must be whole numbers from 1 to 10000 pixels."=.("Figure dimensions must be whole numbers from 1 to 10000 pixels."),
+    "Use a unique result name containing letters, digits or underscores."=.("Use a unique result name containing letters, digits or underscores."),
+    "The figure title must be a single string."=.("The figure title must be a single string."),
+    "Syntax error"=.("Syntax error"), "Called from"=.("Called from")
 )

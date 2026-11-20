@@ -1,4 +1,4 @@
-# Actual analysis lifecycle with System R; only shared-memory acquisition is a fixture.
+# Actual Rj/Rjp Analysis lifecycle, real System R process and RDS dataset transport.
 args<-commandArgs(TRUE);root<-normalizePath(args[1],winslash='/')
 source(file.path(root,'tests/helper_paths.R'));mzRjTestPaths(root)
 library(Rj);jmvcore:::initProtoBuf()
@@ -13,15 +13,12 @@ optionsPB<-function(values) {
  for(value in values)z$add('options',optionPB(value));z
 }
 folder<-tempfile('Rj-system-lifecycle-');dir.create(folder)
-dataPath<-file.path(folder,'data.rds');saveRDS(data.frame(x=1:5),dataPath)
-template<-paste(readLines(file.path(root,'inst/remote.R')),collapse='\n')
-template<-gsub("remoteEnvironment <- new.env(parent=asNamespace('jmvconnect'))",paste0("remoteEnvironment <- new.env(parent=asNamespace('jmvconnect'))\nremoteEnvironment$readDF <- function(...)readRDS(",deparse1(dataPath),")"),template,fixed=TRUE)
-templatePath<-file.path(folder,'remote.R');writeLines(template,templatePath)
-e<-new.env(parent=asNamespace('Rj'));e$.datasetPath<-'fixture'
+e<-new.env(parent=asNamespace('Rj'))
 e$system.file<-function(...,package='base',mustWork=FALSE){
- if(identical(package,'Rj')&&identical(list(...),list('remote.R')))return(templatePath)
+ if(identical(package,'Rj')&&identical(list(...),list('remote.R')))return(file.path(root,'inst/remote.R'))
  base::system.file(...,package=package,mustWork=mustWork)
 }
+sys.source(file.path(root,'R/eval.R'),envir=e)
 sys.source(file.path(root,'R/mzRj_process.R'),envir=e)
 # Optional dependency library is confined to the test child.
 if(nzchar(Sys.getenv('MZRJ_SYSTEM_TEST_LIBS'))) {
@@ -38,9 +35,9 @@ for(prefix in c('Rj','Rjp')) {
  base<-e[[paste0(prefix,'Class')]]
  cls<-R6::R6Class(paste0(prefix,'SystemTest'),inherit=base,private=list(.findR=function()list(path=command,rcv=as.character(getRversion()))))
  opts<-getFromNamespace(paste0(prefix,'Options'),'Rj')
- make<-function(code){
+ make<-function(code,mode='external',state=list()){
   sub<-tempfile(tmpdir=folder);dir.create(sub);dir.create(file.path(sub,'resources'));dir.create(file.path(sub,'temp'))
-  a<-cls$new(options=opts$new(code=code,vars='x',R='external'),data=data.frame(x=1:5),datasetId='fixture',analysisId=1L)
+  a<-cls$new(options=opts$new(code=code,vars='x',R=mode,editorState=state),data=data.frame(x=1:5),datasetId='fixture',analysisId=1L)
   a$options$fromProtoBuf(optionsPB(lapply(a$options$options,function(o)if(inherits(o,'OptionOutput'))list(value=TRUE,vars=list(),synced=list()) else o$value)))
   a$.setResourcesPathSource(function(name,suffix)list(rootPath=file.path(sub,'resources'),relPath=paste0(name,'.',suffix)))
   a$.setStatePathSource(function()file.path(sub,'state'));a$init();a$.load();a$postInit();a
@@ -57,5 +54,23 @@ for(prefix in c('Rj','Rjp')) {
  stopifnot(identical(ok,FALSE),ticks>=3L,unname(proc.time()[['elapsed']])-start<10)
  c<-make('cat("Recovered after restart\\n");plot(data$x)')
  stopifnot(isTRUE(c$run()),c$status!='error')
- cat(prefix,': actual System R launch, native Image/Svg, Output contract, checkpoint restart and recovery PASSED (dataset fixture)\n')
+ # Both real engine paths must preserve the same multiline diagnostics.
+ for(mode in c('bundled','external')) {
+  cases<-list(
+   list(code='x<-1\nstop("First caf\\u00e9\\nSecond line")',state=list(filename='analysis.R'),patterns=c('analysis.R','line 2','Second line')),
+   list(code='x<-1\ny<- )',state=list(),patterns=c('Syntax error','line 2')),
+   list(code='helper()',state=list(filename='analysis.R',serviceName='helpers.R',serviceCode='helper<-function(){\n stop("Service failure")\n}'),patterns=c('helpers.R','line 2','Called from analysis.R','line 1')))
+  for(case in cases) {
+   d<-make(case$code,mode,case$state)
+   failure<-tryCatch(d$run(),error=identity)
+   stopifnot(inherits(failure,'error'))
+   for(pattern in case$patterns)stopifnot(grepl(pattern,conditionMessage(failure),fixed=TRUE))
+   # Recover the SAME analysis after a reported error, not merely a fresh object.
+   values<-lapply(d$options$options,function(o)if(inherits(o,'OptionOutput'))list(value=TRUE,vars=list(),synced=list()) else o$value)
+   values$code<-'cat("Same analysis recovered");plot(data$x)';values$editorState<-list()
+   d$options$fromProtoBuf(optionsPB(values))
+   stopifnot(isTRUE(d$run()),d$status!='error')
+  }
+ }
+ cat(prefix,': actual System R launch, native Image/Svg, Output contract, checkpoint restart and recovery PASSED (real RDS dataset transport, same-analysis error recovery)\n')
 }

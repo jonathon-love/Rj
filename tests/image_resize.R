@@ -26,10 +26,15 @@ for(prefix in c('Rj','Rjp'))for(engine in c('embedded','system')) {
  }
  a<-make()
  if(engine=='embedded')a$run() else {
-  # Capture in an actual System R process using its installed jmvconnect evaluator.
+  # Capture using the same serialized evaluator and child environment as Rj.
   input<-file.path(folder,'input.rds');output<-file.path(folder,'system.rds');saveRDS(list(code=code,data=data.frame(x=1:5),save=prefix=='Rjp'),input)
-  worker<-file.path(folder,'worker.R');writeLines(c('args<-commandArgs(TRUE);x<-readRDS(args[1]);z<-jmvconnect:::eval(x$code,x$data,FALSE,saveColumns=x$save);saveRDS(z,args[2])'),worker)
-  status<-system2(mzRjSystemRscript(),c('--vanilla',shQuote(worker),shQuote(input),shQuote(output)),stdout=TRUE,stderr=TRUE)
+  evaluator<-new.env(parent=asNamespace('Rj'));sys.source(file.path(root,'R/eval.R'),envir=evaluator)
+  worker<-file.path(folder,'worker.R')
+  writeLines(c('.mzRj_eval <-',deparse(evaluator$eval),
+   'args<-commandArgs(TRUE);x<-readRDS(args[1]);z<-.mzRj_eval(x$code,x$data,FALSE,saveColumns=x$save);saveRDS(z,args[2])'),worker)
+  runner<-new.env(parent=asNamespace('Rj'));sys.source(file.path(root,'R/mzRj_process.R'),envir=runner)
+  status<-runner$.mzRj_runProcess(mzRjSystemRscript(),c('--vanilla',worker,input,output),'',
+   env=runner$.mzRj_systemREnv(as.character(getRversion())))
   if(!file.exists(output))stop(paste(status,collapse='\n'))
   result<-readRDS(output);for(item in result$items)a$results$add(item)
   getFromNamespace('.mzRj_bindImages','Rj')(a)

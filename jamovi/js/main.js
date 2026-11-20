@@ -11,6 +11,7 @@ const Suggest = require('./suggest');
 const SuggestIcons = require('./suggesticons');
 const initSettings = require('./mzRj_settings');
 const initFiles = require('./mzRj_editor_files');
+const createToast = require('./mzRj_toast');
 const styleVariables = require('./mzRj_variables');
 const initOmvFiles = require('./mzRj_omv_files');
 
@@ -51,7 +52,6 @@ const events = {
                             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2"/><circle cx="16" cy="12" r="2.2"/><circle cx="8" cy="18" r="2.2"/></svg>
                         </button>
                 <div id="menu" role="region" aria-label="${_('R editor settings')}" aria-hidden="true" hidden>
-                    <div id="menu-drag"><span>${_('Settings')}</span><button type="button" id="close-settings" aria-label="${_('Close settings')}">×</button></div>
                     <div class="mzrj-setting-row"><label for="output">${_('Output')}</label>
                         <select id="output"><option value="noEcho">${_('Show output only')}</option><option value="echo">${_('Show code and output')}</option></select>
                     </div>
@@ -103,6 +103,9 @@ const events = {
         }
 
         this.editor = ace.edit(this.$editor);
+        if (this.notifications) this.notifications.dispose();
+        this.notifications = createToast($contents);
+        this.showToast = (text, options) => this.notifications.show(text, options);
         initFiles.call(this, ui, $contents);
         styleVariables(ui);
         initOmvFiles(ui, this.$menu);
@@ -193,8 +196,13 @@ const events = {
             script = script.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
 
             let columns = [ ];
-            if (window.name === 'Rj-Rj')
-                columns = await this.getColumnNames();
+            try {
+                if (window.name === 'Rj-Rj') columns = await this.getColumnNames();
+            } catch (error) {
+                if (session === this.currentSession && request === this.runRequest)
+                    this.showToast(_('Unable to read dataset columns. Please try again.'), {kind:'error', duration:10000});
+                return;
+            }
             if (session !== this.currentSession || request !== this.runRequest)
                 return;
 
@@ -296,6 +304,7 @@ const events = {
         }
         if (previous && previous !== this.currentSession) {
             this.settings.hide(false);
+            this.notifications.clear();
             this.fileRequest = (this.fileRequest || 0) + 1;
             this.runRequest = (this.runRequest || 0) + 1;
             this.pendingFile = null;

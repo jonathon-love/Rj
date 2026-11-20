@@ -37,7 +37,7 @@ module.exports = function(ui, root) {
     const message = root.querySelector('#editor-message');
     const replace = root.querySelector('#editor-replace');
     this.pendingFile = null;
-    this.showMessage = text => { message.textContent = text; message.hidden = !text; };
+    this.showMessage = text => { message.hidden = true; this.showToast(text, {kind:'warning'}); };
     this.refreshFiles = () => {
         if (!this.currentSession) return;
         const state = this.currentSession.rjState;

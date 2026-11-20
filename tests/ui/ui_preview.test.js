@@ -30,7 +30,7 @@ fs.mkdirSync(output, {recursive:true});
 
    const modules={};
 
-   for(const name of ['main','css','suggest','suggesticons','funcs','mzRj_settings','mzRj_editor_files','mzRj_variables','mzRj_omv_files','mzRj_i18n','mzRj_version'])modules[name]=fs.readFileSync(path.join(root,'jamovi/js',name+'.js'),'utf8');
+   for(const name of ['main','css','suggest','suggesticons','funcs','mzRj_settings','mzRj_editor_files','mzRj_variables','mzRj_omv_files','mzRj_i18n','mzRj_version','mzRj_toast'])modules[name]=fs.readFileSync(path.join(root,'jamovi/js',name+'.js'),'utf8');
 
    await page.evaluate(({modules,kind})=>{
 
@@ -83,6 +83,8 @@ fs.mkdirSync(output, {recursive:true});
 
    },{modules,kind});
 
+   assert.strictEqual(await page.locator('#close-settings').count(),0);
+   assert.strictEqual(await page.locator('#menu-drag').count(),0);
    assert.strictEqual(await page.locator('#editor-kind').count(),0);
    assert.strictEqual(await page.locator('#editor-filename').textContent(),'Untitled');
    assert.strictEqual(await page.locator('#app').evaluate(el=>parseFloat(getComputedStyle(el).paddingTop)),kind==='Rj'?7.5:15);
@@ -184,6 +186,18 @@ fs.mkdirSync(output, {recursive:true});
 
    assert.strictEqual(await page.evaluate(()=>window.secondDraft),"cat('analysis two')");
 
+   // Typing is passive even while a previous execution is conceptually in progress.
+   await page.evaluate(()=>{
+    const f=fixture;f.reset();window.draftRunCalls=0;
+    window.previousRun=f.ctx.run;f.ctx.run=function(...args){window.draftRunCalls++;return window.previousRun.apply(this,args);};
+    window.beforeDraft={code:f.store.code,toggle:f.store.toggle};f.ctx.editor.focus();
+   });
+   await page.keyboard.type('# draft edit without Run');
+   assert.strictEqual(await page.evaluate(()=>window.draftRunCalls),0);
+   assert(await page.evaluate(()=>fixture.writes.length>0&&fixture.writes.every(w=>w.key==='editorState')));
+   assert(await page.evaluate(()=>fixture.store.code===window.beforeDraft.code&&fixture.store.toggle===window.beforeDraft.toggle));
+   await page.evaluate(()=>{fixture.ctx.run=window.previousRun;});
+
    await page.evaluate(()=>{fixture.reset();fixture.ctx.editor.setValue('# (Sepal.Length)\nsummary(data)',-1);});
 
    await page.locator('#run').click();
@@ -227,6 +241,15 @@ fs.mkdirSync(output, {recursive:true});
    await page.setInputFiles('#service-file',{name:'helpers.R',mimeType:'text/plain',buffer:Buffer.from('helper <- function() 42')});
 
    await page.waitForFunction(()=>fixture.store.editorState.serviceName==='helpers.R');
+   assert.strictEqual(await page.locator('.mzrj-toast').count(),0,'Successful Service load must be silent');
+   // Exact user sequence: Service, then Load. Keep the two sources distinct and show no success toast.
+   await page.setInputFiles('#editor-file',{name:'diagnostics.R',mimeType:'text/plain',buffer:Buffer.from('cat("diagnostic code")')});
+   await page.locator('#replace-script').click();
+   await page.waitForFunction(()=>fixture.store.editorState.filename==='diagnostics.R');
+   assert.strictEqual(await page.evaluate(()=>fixture.ctx.editor.getValue()),'cat("diagnostic code")');
+   assert.strictEqual(await page.evaluate(()=>fixture.store.editorState.serviceName),'helpers.R');
+   assert.strictEqual(await page.evaluate(()=>fixture.store.editorState.serviceCode),'helper <- function() 42');
+   assert.strictEqual(await page.locator('.mzrj-toast').count(),0,'Successful Load must not repeat any Service notice');
 
    await page.evaluate(()=>fixture.reset());
 
@@ -263,9 +286,9 @@ fs.mkdirSync(output, {recursive:true});
 
    assert(zoomed.x>=0&&zoomed.y>=0&&zoomed.x+zoomed.width<=1000&&zoomed.y+zoomed.height<=720);
 
-   const handle=await page.locator('#menu-drag').boundingBox();
+   const handle=await page.locator('#menu').boundingBox();
 
-   await page.mouse.move(handle.x+20,handle.y+8);await page.mouse.down();await page.mouse.move(handle.x-30,handle.y+38);await page.mouse.up();
+   await page.mouse.move(handle.x+handle.width/2,handle.y+4);await page.mouse.down();await page.mouse.move(handle.x+handle.width/2-50,handle.y+34);await page.mouse.up();
 
    const moved=await page.locator('#menu').boundingBox();assert(Math.abs(moved.x-zoomed.x)>15||Math.abs(moved.y-zoomed.y)>15);
 
@@ -304,6 +327,33 @@ fs.mkdirSync(output, {recursive:true});
    await page.locator('#menu').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished)));
 
    assert(await page.locator('#menu').isVisible());
+
+   await page.setViewportSize({width:1000,height:720});
+   // Operational toasts do not execute R, steal focus, interpret HTML, or survive an analysis switch.
+   await page.evaluate(()=>{fixture.reset();fixture.ctx.editor.focus();fixture.ctx.showToast('<b>Literal notice</b>',{duration:0});});
+   assert.strictEqual(await page.locator('.mzrj-toast-message').textContent(),'<b>Literal notice</b>');
+   assert.strictEqual(await page.locator('.mzrj-toast b').count(),0);
+   assert.strictEqual(await page.evaluate(()=>fixture.writes.length),0);
+   assert(await page.evaluate(()=>fixture.ctx.editor.isFocused()));
+   await page.locator('.mzrj-toast button').click();
+   assert.strictEqual(await page.locator('.mzrj-toast').count(),0);
+   await page.evaluate(()=>fixture.ctx.showToast('Paused notice',{duration:120}));
+   await page.locator('.mzrj-toast').hover();await page.waitForTimeout(180);
+   assert.strictEqual(await page.locator('.mzrj-toast').count(),1);
+   await page.mouse.move(950,10);await page.waitForTimeout(180);
+   assert.strictEqual(await page.locator('.mzrj-toast').count(),0);
+   await page.locator('#editor-file').setInputFiles({name:'invalid.txt',mimeType:'text/plain',buffer:Buffer.from('stop("Must not run")')});
+   assert.strictEqual(await page.locator('.mzrj-toast-message').textContent(),'Choose an R script (.R).');
+   await page.locator('.mzrj-toast').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished)));
+   await page.screenshot({path:path.join(output,kind+'_toast.png')});
+   await page.keyboard.press('Escape');assert.strictEqual(await page.locator('.mzrj-toast').count(),0);
+   if(kind==='Rj') {
+    await page.evaluate(async()=>{fixture.reset();const prior=fixture.ctx.getColumnNames;fixture.ctx.getColumnNames=async()=>{throw Error('fixture');};await fixture.ctx.run(fixture.ui);fixture.ctx.getColumnNames=prior;});
+    assert.strictEqual(await page.locator('.mzrj-toast').getAttribute('role'),'alert');
+    assert.strictEqual(await page.evaluate(()=>fixture.writes.length),0);
+   }
+   await page.evaluate(()=>{fixture.ctx.showToast('Old analysis',{duration:0});fixture.ctx.update(fixture.ui,{id:999});});
+   assert.strictEqual(await page.locator('.mzrj-toast').count(),0);
 
    assert.deepStrictEqual(errors,[]);
 

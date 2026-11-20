@@ -1,7 +1,7 @@
 # Rj/Rjp development preview: System R process and native graphics.
 # 1. Restart jamovi after installing the preview; no dataset is required.
-# 2. In Settings choose System R and Run this script. Its usual jmvconnect
-#    dependency must already be installed for the R executable found by Rj.
+# 2. In Settings choose System R and Run this script. The selected R needs
+#    jmvcore and evaluate; dataset transfer does not require jmvconnect.
 # 3. Compare with Embedded R. The console identifies the actual R executable.
 # 4. To test interruption, set TEST_INTERRUPT to TRUE and Run in System R.
 #    While it is waiting, change the interpreter to Embedded. Then set this
@@ -18,11 +18,11 @@ if (TEST_INTERRUPT) {
 
 values <- pressure
 print(summary(values))
-rjShowImage(function() {
+mzrjShowImage(function() {
     plot(values, type="b", pch=19, col="#3e6da9",
          main="System process check: native Image")
 }, width=640, height=400, name="process_image")
-rjShowSvg(function() {
+mzrjShowSvg(function() {
     plot(values, type="b", pch=19, col="#3e6da9",
          main="System process check: native Svg")
 }, width=720, height=420, name="process_svg")

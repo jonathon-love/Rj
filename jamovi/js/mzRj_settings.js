@@ -71,7 +71,6 @@ module.exports = function(ui, root, onRun) {
         menu.classList.add('visible');
     };
     listen(button, 'click', () => open ? hide() : show());
-    listen(root.querySelector('#close-settings'), 'click', () => hide(true, true));
     listen(menu, 'pointerdown', event => {
         if (!open || event.button !== 0 || event.target.closest('button,input,select,label,option')) return;
         const bounds = menu.getBoundingClientRect();

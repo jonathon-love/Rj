@@ -16,16 +16,13 @@
     })
 }
 
-.mzRj_editorCode <- function(self) {
-    state <- self$options$editorState
-    service <- state$serviceCode
-    if (is.null(service) || !nzchar(service)) return(self$options$code)
-    filename <- state$serviceName
-    if (is.null(filename) || !nzchar(filename)) filename <- 'Service.R'
-    source <- paste0('base::srcfilecopy(', deparse1(filename),
-        ', base::strsplit(', deparse1(service), ', "\\n", fixed=TRUE)[[1]])')
-    paste0('base::eval(base::parse(text=', deparse1(service), ', srcfile=', source,
-        ', keep.source=TRUE), envir=environment())\n', self$options$code)
+.mzRj_editorCode <- function(self) self$options$code
+
+.mzRj_editorSources <- function(self) {
+    state<-self$options$editorState
+    list(editorName=if(is.null(state$filename)||!nzchar(state$filename)).('R editor') else state$filename,
+         serviceName=if(is.null(state$serviceName)||!nzchar(state$serviceName)).('Service script') else state$serviceName,
+         serviceCode=if(is.null(state$serviceCode))'' else state$serviceCode)
 }
 
 # Ricostruzione dei tipi usati da Rj e dai risultati strutturati ospitati.

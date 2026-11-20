@@ -25,13 +25,16 @@
 
 # Merged output and nonzero status follow the previous system2 contract.
 # A file-backed stdin avoids blocking while writing a large script into a pipe.
-.mzRj_runProcess <- function(command, args, script, env=NULL, checkpoint=NULL, timeout=0) {
+.mzRj_runProcess <- function(command, args, script, env=NULL, checkpoint=NULL, timeout=0, errorMarker=NULL) {
     if(!is.character(script)||length(script)!=1L||is.na(script))
         stop(.('The System R script must be a single string.'),call.=FALSE)
     if(!is.numeric(timeout)||length(timeout)!=1L||!is.finite(timeout)||timeout<0)
         stop(.('The process timeout must be a non-negative number.'),call.=FALSE)
     if(!is.null(checkpoint)&&!is.function(checkpoint))
         stop(.('The process checkpoint must be a function.'),call.=FALSE)
+    if(!is.null(errorMarker)&&(!is.character(errorMarker)||length(errorMarker)!=1L||
+        is.na(errorMarker)||!nzchar(errorMarker)||grepl('[\r\n]',errorMarker)))
+        stop(.('The process error marker must be one non-empty line.'),call.=FALSE)
     # processx 3.9 requires a complete, non-NA environment vector. Apply the
     # requested overrides to a snapshot, so NA can remove a child variable.
     childEnv <- NULL
@@ -62,9 +65,22 @@
         stdout='|',stderr='2>&1',env=childEnv,cleanup_tree=TRUE,encoding='UTF-8',
         windows_hide_window=identical(Sys.info()[['sysname']],'Windows'))
     chunks <- list()
+    reportedError <- FALSE
+    controlTail <- ''
     drain <- function() {
         chunk <- process$read_output(n=65536L)
-        if(nzchar(chunk))chunks[[length(chunks)+1L]] <<- chunk
+        if(nzchar(chunk)) {
+            chunks[[length(chunks)+1L]] <<- chunk
+            if(!is.null(errorMarker)) {
+                control<-paste0(controlTail,chunk)
+                lines<-strsplit(control,'\n',fixed=TRUE)[[1]]
+                if(endsWith(control,'\n'))complete<-lines else complete<-head(lines,-1L)
+                reportedError<<-reportedError||any(sub('\r$','',complete)==errorMarker)
+                controlTail<<-if(endsWith(control,'\n'))'' else tail(lines,1L)
+                # Only a short protocol line can match. Do not retain arbitrary output.
+                if(nchar(controlTail)>nchar(errorMarker)+1L)controlTail<<-substr(controlTail,nchar(controlTail),nchar(controlTail))
+            }
+        }
         nzchar(chunk)
     }
     timedOut <- FALSE
@@ -76,7 +92,7 @@
         drain()
         if(!is.null(checkpoint))checkpoint()
         if(expired()){timedOut<-TRUE;break}
-        if(!process$is_alive())break
+        if(reportedError||!process$is_alive())break
     }
     if(!timedOut) {
         # Kill descendants even after a normal parent exit, before draining its output.
@@ -91,7 +107,7 @@
             if(!received&&!process$is_incomplete_output())break
         }
     }
-    status <- if(timedOut)124L else process$get_exit_status()
+    status <- if(timedOut)124L else if(reportedError)0L else process$get_exit_status()
     if(is.null(status)||is.na(status))stop(.('System R stopped without an exit status.'),call.=FALSE)
     text <- paste0(unlist(chunks,use.names=FALSE),collapse='')
     result <- if(nzchar(text))strsplit(text,'\r?\n')[[1]] else character()

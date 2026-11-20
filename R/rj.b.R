@@ -28,6 +28,8 @@ RjClass <- R6::R6Class(
             context <- new.env(parent=emptyenv())
             context$data <- .mzRj_dataext(self)
             code <- .mzRj_editorCode(self)
+            sourceInfo <- .mzRj_editorSources(self)
+            sourceInfo$messages <- .mzRj_remoteMessages(self)
             echo <- self$options$output == 'echo'
             figWidth  <- self$options$figWidth
             figHeight <- self$options$figHeight
@@ -36,7 +38,7 @@ RjClass <- R6::R6Class(
 
                 eval(code, self$data, echo, self$results,
                      figWidth=figWidth, figHeight=figHeight,
-                     saveColumns=self$saveColumns,dataextEnv=context)
+                     saveColumns=self$saveColumns,dataextEnv=context,sourceInfo=sourceInfo)
 
             } else {
 
@@ -44,12 +46,13 @@ RjClass <- R6::R6Class(
                 outputPath <- tempfile()
                 dataextInput <- tempfile(fileext='.rds');dataextOutput <- tempfile(fileext='.rds')
                 evaluatorPath <- tempfile(fileext='.R')
-                on.exit(unlink(c(outputPath,dataextInput,dataextOutput,evaluatorPath)),add=TRUE)
+                dataInput <- tempfile(fileext='.rds')
+                on.exit(unlink(c(outputPath,dataextInput,dataextOutput,evaluatorPath,dataInput)),add=TRUE)
                 saveRDS(context$data,dataextInput)
-                writeLines(c('.mzRj_eval <-',deparse(eval),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
+                saveRDS(self$data,dataInput)
+                writeLines(c('.mzRj_eval <-',deparse(eval),'.mzRj_sourceInfo <-',deparse(sourceInfo),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
                     '. <- function(text) {value <- .mzRj_messages[[text]];if(is.null(value))text else value}'),evaluatorPath)
 
-                datasetPath <- gsub('\\', '/', .datasetPath, fixed=TRUE)
                 outputPath <- gsub('\\', '/', outputPath, fixed=TRUE)
 
                 code <- gsub('\\', '\\\\', code, fixed=TRUE)
@@ -57,17 +60,11 @@ RjClass <- R6::R6Class(
 
                 script <- readLines(scriptPath)
                 script <- paste0(script, collapse='\n')
-                script <- gsub('{{DATASET}}', datasetPath, script, fixed=TRUE)
+                script <- gsub('{{DATA_INPUT}}', deparse1(dataInput), script, fixed=TRUE)
                 script <- gsub('{{OUTPATH}}', outputPath, script, fixed=TRUE)
                 script <- gsub('{{FIGWIDTH}}', figWidth, script, fixed=TRUE)
                 script <- gsub('{{FIGHEIGHT}}', figHeight, script, fixed=TRUE)
                 script <- gsub('{{ECHO}}', echo, script, fixed=TRUE)
-
-                columns <- self$options$get('vars')
-                if (is.null(columns))
-                    columns <- character()
-                columns <- deparse1(columns)
-                script <- gsub('{{COLUMNS}}', columns, script, fixed=TRUE)
 
                 script <- gsub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
                 script <- gsub('{{EVALUATOR}}', deparse1(evaluatorPath), script, fixed=TRUE)
@@ -90,7 +87,8 @@ RjClass <- R6::R6Class(
                     args=c('--no-save','--no-restore','--slave','--encoding=UTF-8'),
                     script=script,
                     env=.mzRj_systemREnv(R$rcv),
-                    checkpoint=function() private$.checkpoint(flush=FALSE))
+                    checkpoint=function() private$.checkpoint(flush=FALSE),
+                    errorMarker='ERROR_RDS')
                 status <- attr(result,'status')
                 if(!is.null(status) && status!=0L)
                     stop(paste(.("System R stopped with exit status"),status,
@@ -98,9 +96,9 @@ RjClass <- R6::R6Class(
                 receivedResults <- FALSE
 
                 for (line in result) {
-                    if (jmvcore::startsWith(line, 'ERROR: ')) {
+                    if (jmvcore::startsWith(line, 'ERROR: ') || identical(line,'ERROR_RDS')) {
 
-                        message <- substring(line, 8)
+                        message <- if(identical(line,'ERROR_RDS'))readRDS(outputPath)$message else substring(line, 8)
                         if (message == 'Memory segment version is too new')
                             message <- 'A newer version of jmvconnect is required'
                         if (message == 'Memory segment version is too old')

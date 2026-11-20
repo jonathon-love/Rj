@@ -12,7 +12,7 @@ optionsPB<-function(values) {
 }
 folder<-tempfile();dir.create(folder);dir.create(file.path(folder,'resources'));dir.create(file.path(folder,'temp'))
 counter<-file.path(folder,'counter');writeLines('0',counter)
-code<-paste0('p<-',deparse1(counter),';writeLines(as.character(as.integer(readLines(p))+1L),p);rjShowSvg(function()plot(1:5),width=640,height=360,name="test_svg")')
+code<-paste0('p<-',deparse1(counter),';writeLines(as.character(as.integer(readLines(p))+1L),p);mzrjShowSvg(function()plot(1:5),width=640,height=360,name="test_svg")')
 cls<-getFromNamespace('RjClass','Rj');opts<-getFromNamespace('RjOptions','Rj')
 make<-function(pb=NULL) {
  a<-cls$new(options=opts$new(code=code,vars='x',R='bundled'),data=data.frame(x=1:5),datasetId='resize',analysisId=1L)

@@ -60,4 +60,9 @@ for(mode in c('success','timeout','restart')) {
  if(mode=='restart')check(identical(value,restart))
  unlink(folder,recursive=TRUE)
 }
+# A reported worker error must not keep the UI waiting for a hung R finalizer.
+start<-unname(proc.time()[['elapsed']])
+x<-run('cat("ERROR_RDS\\n");flush(stdout());Sys.sleep(60)',errorMarker='ERROR_RDS')
+check('ERROR_RDS' %in% x,is.null(attr(x,'status')),unname(proc.time()[['elapsed']])-start<5)
+check('after reported error' %in% run('cat("after reported error\\n")'))
 cat('System R processx runner:',checks,'checks PASSED\n')
