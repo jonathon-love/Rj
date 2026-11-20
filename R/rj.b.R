@@ -77,67 +77,25 @@ RjClass <- R6::R6Class(
 
                 R <- private$.findR()
 
-                Sys.unsetenv(c(
-                    'R_ENVIRON',
-                    'R_PROFILE',
-                    'R_PROFILE_USER',
-                    'R_ENVIRON_USER',
-                    'R_LIBS_SITE',
-                    'R_LIBS_USER',
-                    'R_LIBS',
-                    'R_USER',
-                    'HOME'));
-
-                if (Sys.info()['sysname'] == 'Windows') {
-
-                    rcv <- package_version(R$rcv)
-
-                    if (rcv > package_version('4.1.3')) {
-                        libPaths=file.path(rappdirs::user_data_dir(), 'R', 'win-library', '%v')
-                    } else {
-                        libPaths=file.path(Sys.getenv('USERPROFILE'), 'Documents', 'R', 'win-library', '%v')
-                    }
-
-                    Sys.setenv(R_LIBS_USER=libPaths)
-
-                    # Update cleanupCode only for "cli"
-                    cleanupCode <- '
-                        tryCatch({
-                            try({
-                                cli_dll <- getLoadedDLLs()[["cli"]]
-                                if (!is.null(cli_dll)) {
-                                    dyn.unload(cli_dll[["path"]])
-                                }
-                            }, silent=TRUE)
-                        }, error=function(e) invisible(NULL))
-                        '
-
-                    script <- paste0(script, cleanupCode)
-
-                    result <- system2(
-                        command='c:\\windows\\system32\\cmd.exe',
-                        args=c(
-                            '/c',
-                            dQuote(R$path),
-                            '--no-save',
-                            '--no-restore',
-                            '--slave'),
-                        stdout=TRUE,
-                        stderr=TRUE,
-                        input=script)
-
-                } else {
-
-                    result <- system2(
-                        command=R$path,
-                        args=c(
-                            '--no-save',
-                            '--no-restore',
-                            '--slave'),
-                        stdout=TRUE,
-                        stderr=TRUE,
-                        input=script)
+                # Retain the existing Windows cli shutdown workaround for older R.
+                if(identical(Sys.info()[['sysname']],'Windows')) {
+                    script <- paste0(script, '\ntry({
+    cli_dll <- getLoadedDLLs()[["cli"]]
+    if(!is.null(cli_dll)) dyn.unload(cli_dll[["path"]])
+}, silent=TRUE)\n')
                 }
+
+                result <- .mzRj_runProcess(
+                    command=R$path,
+                    args=c('--no-save','--no-restore','--slave','--encoding=UTF-8'),
+                    script=script,
+                    env=.mzRj_systemREnv(R$rcv),
+                    checkpoint=function() private$.checkpoint(flush=FALSE))
+                status <- attr(result,'status')
+                if(!is.null(status) && status!=0L)
+                    stop(paste(.("System R stopped with exit status"),status,
+                        paste(tail(result,5L),collapse='\n')),call.=FALSE)
+                receivedResults <- FALSE
 
                 for (line in result) {
                     if (jmvcore::startsWith(line, 'ERROR: ')) {
@@ -150,12 +108,16 @@ RjClass <- R6::R6Class(
                         stop(message, call.=FALSE)
 
                     } else if (line == 'OK') {
+                        receivedResults <- TRUE
                         results <- readRDS(file=outputPath)
                         context$data <- readRDS(dataextOutput)
                         for (item in results$items)
                             self$results$add(item)
                     }
                 }
+
+                if(!receivedResults)
+                    stop(.("System R did not return results."),call.=FALSE)
 
                 unlink(outputPath)
 
@@ -259,7 +221,7 @@ RjClass <- R6::R6Class(
                 stop(.("Could not locate R.exe at the specified registry path"))
 
             } else {  # For Linux and other Unix-like systems
-                path <- system2('which', args = 'R', stdout = TRUE)
+                path <- unname(Sys.which('R'))
                 if (file.exists(path))
                     return(list(path = path))
                 if (file.exists('/usr/bin/R'))

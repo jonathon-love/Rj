@@ -1,0 +1,61 @@
+# Actual analysis lifecycle with System R; only shared-memory acquisition is a fixture.
+args<-commandArgs(TRUE);root<-normalizePath(args[1],winslash='/')
+source(file.path(root,'tests/helper_paths.R'));mzRjTestPaths(root)
+library(Rj);jmvcore:::initProtoBuf()
+optionPB<-function(value) {
+ z<-RProtoBuf::new(RProtoBuf::P('jamovi.coms.AnalysisOption'))
+ if(is.null(value))z$o<-2L else if(is.list(value)||length(value)!=1L)z$c<-optionsPB(as.list(value)) else
+ if(is.logical(value))z$o<-if(value)1L else 0L else if(is.numeric(value))z$d<-as.double(value) else z$s<-as.character(value)
+ z
+}
+optionsPB<-function(values) {
+ z<-RProtoBuf::new(RProtoBuf::P('jamovi.coms.AnalysisOptions'));z$hasNames<-!is.null(names(values));if(z$hasNames)z$names<-names(values)
+ for(value in values)z$add('options',optionPB(value));z
+}
+folder<-tempfile('Rj-system-lifecycle-');dir.create(folder)
+dataPath<-file.path(folder,'data.rds');saveRDS(data.frame(x=1:5),dataPath)
+template<-paste(readLines(file.path(root,'inst/remote.R')),collapse='\n')
+template<-gsub("remoteEnvironment <- new.env(parent=asNamespace('jmvconnect'))",paste0("remoteEnvironment <- new.env(parent=asNamespace('jmvconnect'))\nremoteEnvironment$readDF <- function(...)readRDS(",deparse1(dataPath),")"),template,fixed=TRUE)
+templatePath<-file.path(folder,'remote.R');writeLines(template,templatePath)
+e<-new.env(parent=asNamespace('Rj'));e$.datasetPath<-'fixture'
+e$system.file<-function(...,package='base',mustWork=FALSE){
+ if(identical(package,'Rj')&&identical(list(...),list('remote.R')))return(templatePath)
+ base::system.file(...,package=package,mustWork=mustWork)
+}
+sys.source(file.path(root,'R/mzRj_process.R'),envir=e)
+# Optional dependency library is confined to the test child.
+if(nzchar(Sys.getenv('MZRJ_SYSTEM_TEST_LIBS'))) {
+ originalEnv<-e$.mzRj_systemREnv
+ e$.mzRj_systemREnv<-function(version=NULL){
+  value<-originalEnv(version);value['R_LIBS_USER']<-Sys.getenv('MZRJ_SYSTEM_TEST_LIBS');value
+ }
+}
+sys.source(file.path(root,'R/rj.b.R'),envir=e)
+sys.source(file.path(root,'R/rjp.b.R'),envir=e)
+rscript<-mzRjSystemRscript()
+command<-if(length(args)>1L)args[2] else file.path(dirname(rscript),if(.Platform$OS.type=='windows')'R.exe' else 'R')
+for(prefix in c('Rj','Rjp')) {
+ base<-e[[paste0(prefix,'Class')]]
+ cls<-R6::R6Class(paste0(prefix,'SystemTest'),inherit=base,private=list(.findR=function()list(path=command,rcv=as.character(getRversion()))))
+ opts<-getFromNamespace(paste0(prefix,'Options'),'Rj')
+ make<-function(code){
+  sub<-tempfile(tmpdir=folder);dir.create(sub);dir.create(file.path(sub,'resources'));dir.create(file.path(sub,'temp'))
+  a<-cls$new(options=opts$new(code=code,vars='x',R='external'),data=data.frame(x=1:5),datasetId='fixture',analysisId=1L)
+  a$options$fromProtoBuf(optionsPB(lapply(a$options$options,function(o)if(inherits(o,'OptionOutput'))list(value=TRUE,vars=list(),synced=list()) else o$value)))
+  a$.setResourcesPathSource(function(name,suffix)list(rootPath=file.path(sub,'resources'),relPath=paste0(name,'.',suffix)))
+  a$.setStatePathSource(function()file.path(sub,'state'));a$init();a$.load();a$postInit();a
+ }
+ a<-make(paste(c("if(requireNamespace('cli',quietly=TRUE))loadNamespace('cli')",readLines(file.path(root,'examples/05_processx_system.R'))),collapse='\n'))
+ ok<-a$run();stopifnot(isTRUE(ok),a$status!='error')
+ items<-lapply(a$results$itemNames,function(n)a$results$get(n))
+ stopifnot(any(vapply(items,inherits,logical(1),'Image')),any(vapply(items,inherits,logical(1),'Svg')),
+           any(vapply(items,inherits,logical(1),'Output'))==identical(prefix,'Rjp'))
+ # A restart must propagate through Analysis$run, then a fresh analysis can run.
+ b<-make('Sys.sleep(15)');ticks<-0L
+ b$.setCheckpoint(function(results){ticks<<-ticks+1L;if(ticks>=3L)'restart' else NULL})
+ start<-unname(proc.time()[['elapsed']]);ok<-b$run(noThrow=TRUE)
+ stopifnot(identical(ok,FALSE),ticks>=3L,unname(proc.time()[['elapsed']])-start<10)
+ c<-make('cat("Recovered after restart\\n");plot(data$x)')
+ stopifnot(isTRUE(c$run()),c$status!='error')
+ cat(prefix,': actual System R launch, native Image/Svg, Output contract, checkpoint restart and recovery PASSED (dataset fixture)\n')
+}
