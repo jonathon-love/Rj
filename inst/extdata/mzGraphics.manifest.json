@@ -1,0 +1,51 @@
+{
+  "name": "mzGraphics",
+  "version": "1.0.0",
+  "protocol": 1,
+  "build": "f010ae88bb1aa13e",
+  "sourceSha256": "f010ae88bb1aa13ef3e5b7d66a7b9fd5b12c6754dcf7ef180daeba3203a74acb",
+  "tools": {
+    "terser": "5.51.2",
+    "clean-css": "5.3.3"
+  },
+  "builderSha256": "3d645dd49ff9a66bce254744416b8d8a05eb47c6946ea4d8e4759fa706a8623d",
+  "lockSha256": "815c01fa8e7774f77abb3dbf91f44518ebae5e8200003a0fd8df68ff26ed57fb",
+  "inputs": {
+    "src/d3/core.js": "7288fb791c107edc93febc6d084cfe70e50d8757a682e96d88c8a4e84f54909a",
+    "src/d3/scatter.js": "440c6b84e65b1525c3e21db2a97ad0f7a35a3309e7df12d669e4dc8649ab79e5",
+    "src/d3/histogram.js": "7c901d3108c69f48243e3d8e8c0a5fc7440aa32beb305f6d67a1eb69eb99663e",
+    "src/d3/boxplot.js": "487dd6145e307b0829e4381cc7c872340a32dfdb2ca3a3ea0a3d9bb3ab324aec",
+    "src/d3/bar.js": "2366de6cbb9097ca9013a200e52f194c38c2af683c6fa044f790ff5a0624ec9c",
+    "src/d3/line.js": "945debe7013b61b4cc1e58e7c3e30f8d7d6fef6d4b654c47875fcfa4158f7e84",
+    "src/d3/intervals.js": "af13cd846f8714bc1b05c83a81d9828868c51075d67d3bb86db87c53417ae417",
+    "src/d3/distribution.js": "5dace6723a39bbf83a711d8e1ec9f88acc2a9a0f3d376c434b9af56d1c0b3932",
+    "src/d3/correlation.js": "91eb426fceea33cd9ae233d8684afc63834595c8f4bbfc6c08bcaa07614575d7",
+    "src/d3/paired.js": "0c4a70d6b96d4654da3eff6ce27a571e38eea01ecf6f03668fccd3fd0bacd09a",
+    "src/d3/test_distribution.js": "706bddc513c458c80e8b99e354a5f70a9ba49631bf68783bb89f03466cfe0346",
+    "src/d3/interaction.js": "85254dda8ff2a99e9c919a35f91fd82d383cd38b58107043a5d9df5792ed933c",
+    "src/d3/common.css": "9c5e95638c5faf601f413ac041f5a61f49eaf12f61d050650371b664540b8a7e",
+    "src/common/zoom.css": "f3e7e202e7b6d84131216d1aa1c787cd3b76d4f1dd704585c5e6041bce1909f2",
+    "src/plotly/interaction.js": "d3f7bb20d46c4f28e99d175ae7c0a049d55d222f17fbf4544894faf272529471",
+    "src/plotly/recipes.js": "544b00b6d16085c7124b116241ec0dc85fab0559d00fc6f82ffab3fef9bc0018",
+    "src/plotly/mzPlotly.js": "1f038d949726d29655f0291fd789178e893ba4476dc901076f2fde2e840d5e6b",
+    "src/plotly/mzPlotly.css": "066030597764e66e0dd56aea87de65c639c4eb85173a429db8ef389796280571"
+  },
+  "assets": {
+    "mzD3.min.js": {
+      "sha256": "18735dcf908e9635ccc8c08a50da39a1a06615281ec9447c4f7c68f1da5d663a",
+      "bytes": 38536
+    },
+    "mzD3.min.css": {
+      "sha256": "921d09193ebb8bedce94f0f2de67c5eda0ba95900119d80e720968d2a77d46aa",
+      "bytes": 5654
+    },
+    "mzPlotly.min.js": {
+      "sha256": "d76cb1bbfdc87c690c8f111418acd149084d9bfe8f43b51ffa6e78c35d36fd04",
+      "bytes": 16817
+    },
+    "mzPlotly.min.css": {
+      "sha256": "ed2f40e5508adf99656bc70d387af770ba083959b621c86cea7cb1e496afc043",
+      "bytes": 2767
+    }
+  }
+}

@@ -128,4 +128,9 @@ options:
       default: true
       hidden: true
 
+    - name: graphicCapture
+      type: String
+      default: ''
+      hidden: true
+
 ...

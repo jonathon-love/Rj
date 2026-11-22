@@ -20,7 +20,8 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             output = "noEcho",
             figWidth = "",
             figHeight = "",
-            toggle = FALSE, ...) {
+            toggle = FALSE,
+            graphicCapture = "", ...) {
 
             super$initialize(
                 package="Rj",
@@ -142,6 +143,11 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 hidden=TRUE)
             private$..createdColumns <- jmvcore::OptionOutput$new(
                 "createdColumns")
+            private$..graphicCapture <- jmvcore::OptionString$new(
+                "graphicCapture",
+                graphicCapture,
+                default="",
+                hidden=TRUE)
 
             self$.addOption(private$..code)
             self$.addOption(private$..editorState)
@@ -159,6 +165,7 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..figHeight)
             self$.addOption(private$..toggle)
             self$.addOption(private$..createdColumns)
+            self$.addOption(private$..graphicCapture)
         }),
     active = list(
         code = function() private$..code$value,
@@ -176,7 +183,8 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         figWidth = function() private$..figWidth$value,
         figHeight = function() private$..figHeight$value,
         toggle = function() private$..toggle$value,
-        createdColumns = function() private$..createdColumns$value),
+        createdColumns = function() private$..createdColumns$value,
+        graphicCapture = function() private$..graphicCapture$value),
     private = list(
         ..code = NA,
         ..editorState = NA,
@@ -193,7 +201,8 @@ RjpOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..figWidth = NA,
         ..figHeight = NA,
         ..toggle = NA,
-        ..createdColumns = NA)
+        ..createdColumns = NA,
+        ..graphicCapture = NA)
 )
 
 RjpResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -267,6 +276,7 @@ RjpBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param figWidth .
 #' @param figHeight .
 #' @param toggle .
+#' @param graphicCapture .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$omvExport} \tab \tab \tab \tab \tab a html \cr
@@ -291,7 +301,8 @@ Rjp <- function(
     output = "noEcho",
     figWidth = "",
     figHeight = "",
-    toggle = FALSE) {
+    toggle = FALSE,
+    graphicCapture = "") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("Rjp requires jmvcore to be installed (restart may be required)")
@@ -318,7 +329,8 @@ Rjp <- function(
         output = output,
         figWidth = figWidth,
         figHeight = figHeight,
-        toggle = toggle)
+        toggle = toggle,
+        graphicCapture = graphicCapture)
 
     analysis <- RjpClass$new(
         options = options,

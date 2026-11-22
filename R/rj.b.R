@@ -7,8 +7,15 @@ RjClass <- R6::R6Class(
     ),
     private = list(
         .editorUiOnly=FALSE,
+        .graphicCaptureOnly=FALSE,
         .postInit=function() .mzRj_omvInfo(self),
         .run = function() {
+            if(private$.graphicCaptureOnly) {
+                .mzRj_applyGraphicCapture(self)
+                .mzRj_clearGraphicCapture(self)
+                return()
+            }
+            if(nzchar(self$options$graphicCapture)) .mzRj_clearGraphicCapture(self)
             if(.mzRj_omvAction(self)) return()
             if (isTRUE(self$options$saveEditorScript)) {
                 .mzRj_saveEditor(self)
@@ -29,7 +36,8 @@ RjClass <- R6::R6Class(
             context$data <- .mzRj_dataext(self)
             code <- .mzRj_editorCode(self)
             sourceInfo <- .mzRj_editorSources(self)
-            sourceInfo$messages <- .mzRj_remoteMessages(self)
+            sourceInfo$messages <- c(.mzRj_remoteMessages(self), .mzRj_graphicsMessages(self))
+            sourceInfo$graphicsAssets <- .mzRj_graphicsAssets()
             echo <- self$options$output == 'echo'
             figWidth  <- self$options$figWidth
             figHeight <- self$options$figHeight
@@ -50,7 +58,7 @@ RjClass <- R6::R6Class(
                 on.exit(unlink(c(outputPath,dataextInput,dataextOutput,evaluatorPath,dataInput)),add=TRUE)
                 saveRDS(context$data,dataextInput)
                 saveRDS(self$data,dataInput)
-                writeLines(c('.mzRj_eval <-',deparse(eval),'.mzRj_sourceInfo <-',deparse(sourceInfo),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
+                writeLines(c('.mzRj_graphicsFactory <-',deparse(.mzRj_graphicsFactory),'.mzRj_eval <-',deparse(eval),'.mzRj_sourceInfo <-',deparse(sourceInfo),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
                     '. <- function(text) {value <- .mzRj_messages[[text]];if(is.null(value))text else value}'),evaluatorPath)
 
                 outputPath <- gsub('\\', '/', outputPath, fixed=TRUE)
@@ -132,6 +140,12 @@ RjClass <- R6::R6Class(
             .mzRj_bindImages(self)
         },
         .render=function(image, ...) {
+            if(is.list(image$state) && !is.null(image$state$mzrj_nativePng)) {
+                bitmap<-png::readPNG(jsonlite::base64_dec(image$state$mzrj_nativePng))
+                grid::grid.raster(bitmap,width=grid::unit(1,'npc'),
+                    height=grid::unit(1,'npc'),interpolate=TRUE)
+                return(TRUE)
+            }
             recordedPlot <- image$state
 
             for (i in seq_along(recordedPlot[[1]])) {
@@ -239,6 +253,7 @@ RjClass <- R6::R6Class(
         },
         .load=function(vChanges=character()) {
             private$.editorUiOnly <- FALSE
+            private$.graphicCaptureOnly <- FALSE
 
             jmvcore:::initProtoBuf()
 
@@ -253,13 +268,17 @@ RjClass <- R6::R6Class(
                 groupPB <- pb$results$group
 
                 oChanges <- private$.options$compProtoBuf(pb$options)
+                pending <- is.character(self$options$graphicCapture) && nzchar(self$options$graphicCapture)
+                private$.graphicCaptureOnly <- length(vChanges)==0L &&
+                    ('graphicCapture' %in% oChanges || pending) &&
+                    all(oChanges %in% c('graphicCapture','editorState','createdColumns','dataextInfo'))
                 resizeChanges <- grep('^results/.+/(widthScale|heightScale|width|height)$',oChanges,value=TRUE)
                 resizeOnly <- length(vChanges)==0L && length(resizeChanges)>0L &&
                     all(oChanges %in% c(resizeChanges,'editorState','createdColumns','dataextInfo'))
                 private$.editorUiOnly <- resizeOnly || (length(vChanges)==0L && length(oChanges)>0L &&
                     all(oChanges %in% c('editorState','saveEditorScript','dataextInfo')))
                 saving <- isTRUE(self$options$saveEditorScript) || isTRUE(self$options$saveOmvFile) ||
-                    !is.null(self$options$omvFile) || isTRUE(self$options$previewDataextRequest) || private$.editorUiOnly
+                    !is.null(self$options$omvFile) || isTRUE(self$options$previewDataextRequest) || private$.editorUiOnly || private$.graphicCaptureOnly
                 .mzRj_restoreResults(self, groupPB, if(saving)character() else '*', pb$options)
                 private$.results$fromProtoBuf(pb$results,
                     if(saving)character() else oChanges,

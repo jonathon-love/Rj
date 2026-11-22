@@ -1,0 +1,22 @@
+
+.mzrj-chartjs{font-family:Arial,sans-serif;color:#34445b;margin:12px 0;max-width:100%}
+.mzrj-chartjs .mzrj-cj-body{padding:12px 0 4px}
+.mzrj-chartjs .mzrj-cj-surface{position:relative;max-width:100%;background-size:100% 100%;background-repeat:no-repeat;background-color:white}
+.mzrj-chartjs .mzrj-cj-note{font-size:12px;color:#657b9b;margin:8px 0;line-height:1.5}
+.mzrj-chartjs .mzrj-cj-error{color:#ad3131}
+.mzrj-chartjs .mzrj-cj-float{position:absolute;z-index:3;left:10px;top:10px;width:228px;max-width:calc(100% - 16px);max-height:calc(100% - 16px);display:flex;flex-direction:column;box-sizing:border-box;border:1px solid #c8d8ed;border-radius:8px;background:rgba(255,255,255,.97);box-shadow:0 3px 12px #243c5d22;font-size:12px;color:#506786}
+.mzrj-chartjs .mzrj-cj-float-head{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 11px;cursor:grab;touch-action:none;color:#3e6da9;font-weight:600;border-radius:8px}
+.mzrj-chartjs .mzrj-cj-float-head:focus-visible{outline:2px solid #3e6da9;outline-offset:2px}
+.mzrj-chartjs .mzrj-cj-float-title{flex:1;min-width:0;overflow-wrap:anywhere}
+.mzrj-chartjs .mzrj-cj-float-toggle{width:26px;height:26px;border:0;border-radius:5px;background:#edf3fb;color:#3e6da9;font-size:18px;cursor:pointer}
+.mzrj-chartjs .mzrj-cj-float-body{padding:2px 10px 10px;min-height:0;max-height:190px;overflow:auto;scrollbar-width:thin}
+.mzrj-chartjs .mzrj-cj-float-note{line-height:1.45;margin:5px 0 9px}
+.mzrj-chartjs .mzrj-cj-float-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;width:100%;text-align:left;box-sizing:border-box;font:inherit;color:inherit;border:0;background:transparent}
+.mzrj-chartjs button.mzrj-cj-float-item{cursor:pointer;border-radius:4px}
+.mzrj-chartjs button.mzrj-cj-float-item:hover{background:#f1f6fc}
+.mzrj-chartjs .mzrj-cj-float-marker{width:10px;height:10px;border-radius:3px;margin-top:3px;flex:none}
+.mzrj-chartjs .mzrj-cj-float-item[aria-pressed=false]{opacity:.55}
+.mzrj-chartjs .mzrj-cj-float-item[aria-pressed=false] strong{text-decoration:line-through}
+.mzrj-chartjs .mzrj-cj-float-description{display:block;font-size:11px;line-height:1.4;margin-top:2px;font-weight:400}
+@media print{.mzrj-chartjs canvas{visibility:visible!important}
+.mzrj-chartjs .mzrj-cj-note,.mzrj-chartjs .mzrj-cj-float{display:none!important}.mzrj-chartjs .mzrj-cj-surface{background-image:none!important;break-inside:avoid}}

@@ -1,34 +1,42 @@
-# Rj/Rjp editor and native result improvements
+# Rj/Rjp update proposal: review scope
 
-This branch is a proposal for upstream review. It preserves the Embedded/System R option values and existing Rj/Rjp analyses. No D3, Chart.js or additional graphics library is bundled. The module version is unchanged; the upstream maintainer can select the release number and supported jamovi baseline.
+This branch modernizes the existing R editors while retaining the Embedded/System R choices and analysis identifiers. It is intended for upstream review; it has not been merged into the distributed Rj module. The module version remains 2.7.18 so the upstream maintainer can choose the release number and baseline.
 
-## Changes
+## Editor and lifecycle
 
-- Shared editor toolbar: passive script Load, Save, Clear, filename/draft state, Service script loaded before the editor, keyboard Run and a sliding/draggable Settings panel.
-- Settings retain output mode and global figure size, expose Embedded/System R, and keep the module-version badge in the panel rather than duplicating the editor label.
-- External OMV Read, preview and Save through jmvReadWrite, using a separate `dataext` data frame. The current jamovi dataset is not replaced. The existing Remotes entry is retained; jmvReadWrite and jsonlite are declared Imports because they are called at runtime.
-- Native Image results bind to the analysis options. Restoring/resizing a result preserves other output and does not rerun the user's R script. Svg width/height changes receive the same treatment.
-- `mzrjShowImage(function() { ... }, width=NULL, height=NULL, name=NULL, title='')` and `mzrjShowSvg(...)` are available inside the evaluator, including the serialized System R evaluator. They create native results with their own dimensions. No arguments uses the global figure defaults; one dimension preserves their aspect ratio; both set the individual size. Drawing occurs on a separate device to avoid duplicate automatic plots. Ordinary `plot()` remains supported.
-- English user-facing text uses the existing translation mechanism (`.` in R; translation wrapper in JS). Examples contain English instructions. No dependency is installed into the user's System R by these helpers.
+- Shared toolbar with passive Load/Save/Clear, filename/draft state, Service script and keyboard Run.
+- Sliding/draggable Settings, interpreter selector, global figure size, version badge and consistent Rj/Rjp styling.
+- External OMV Read/preview/Save through jmvReadWrite, using separate `dataext`; the current jamovi dataset is preserved.
+- Native Image/Svg sizing and resize persistence, without rerunning the script for display-only changes.
+- Source-aware syntax/runtime/Service diagnostics, multiline/Unicode messages and recoverable errors. Successful script loading is silent; operational failures use an editor-owned toast.
+- System R uses an owned processx tree, file-backed UTF-8 input, drained output and active checkpoints. Dataset/result transport uses RDS rather than jmvconnect shared-memory acquisition. The child still needs jmvcore/evaluate. Existing R discovery and the Windows cli shutdown workaround are retained.
 
-The follow-up replaces the System R `system2()` launch with an owned `processx` process tree. File-backed UTF-8 input avoids blocking on large scripts; merged output is drained while jamovi checkpoints remain active. Restart/error cleanup terminates owned descendants. Nonzero exit statuses and missing result handshakes are reported explicitly. Environment overrides apply only to the child, leaving the engine environment unchanged. Windows retains the existing System R user-library policy and `cli` shutdown workaround. `processx` and the already-used `rappdirs` are declared Imports. Embedded evaluation and R discovery are unchanged.
+## Graphics block
 
-A subsequent preview adds source-aware syntax/runtime diagnostics for editor and Service scripts and an editor-owned operational toast. Multiline System R error records use the existing result file rather than one console line. See [diagnostics and manual checks](DIAGNOSTICS.md). This block passed automated checks and maintainer desktop acceptance on Windows and Ubuntu 26.04 WSL2 with Embedded and System R, including examples 05 and 06 (diagnostics and Service), on 20 November 2026. Successful Load/Service operations are silent; operational failures use the scoped toast.
+Shared offline D3/Plotly bundles plus Chart.js are adapted to R lists/data frames; no Python or R plotly dependency is introduced. Guided scatter, line, bars, boxplots, histograms and heatmaps complement explicit Plotly/Chart configurations. See [helper contracts, examples and limitations](GRAPHICS.md).
+
+Html retains interaction and optional line/bordered accordion. Svg/Image are native results without Html zoom wrappers; browser PNG capture is acknowledged without rerunning user code. Plotly/Chart Svg exports are raster-backed. Explicit per-result dimensions override the settings popup. Unchanged Chart canvases survive complete script reruns. No backend-service API or R-script toast API is added.
+
+New functions use the `mzrj` prefix. User-facing R/JS text uses extractable translation markers with a remote message catalog. There are no automatic user package installations. Existing copyright and GPL licensing are preserved; vendor licenses and the shared bundle manifest accompany the resources.
+
+## Dependencies and packaging
+
+Imports include the existing jmvReadWrite/jsonlite workflow, processx/rappdirs runner support, and png/grid for native browser images. The existing jmvReadWrite Remotes declaration is retained. The Windows and Linux JMOs include their png dependency. The source repository retains tests/docs/examples and versioned UI dependencies; tests/docs/examples are excluded from the installable JMO.
+
+Build through jmvtools; `tools/update_version.R` stamps the badge from DESCRIPTION. Do not edit the generated badge. Use platform-native R/Node and the target jamovi runtime. Windows/Linux builds are local; Apple Intel/ARM64 use native GitHub Actions jobs at the planned review stage. Older jamovi versions are not certified; native Svg requires a core exposing that result class.
 
 ## Validation and limits
 
-The maintainer has visually accepted the editor, slide animation, file operations, OMV workflow, Image resizing and per-figure Image/Svg examples. Windows and Ubuntu 26.04 WSL2 packages were built and installed with jamovi 28.18.0.0. Embedded and System R evaluator checks passed on Windows and WSL2; The accepted System R recovery build uses RDS dataset transport and was tested without jmvconnect in the worker. Native Svg resize save/restore was checked without rerunning the script. Browser tests use real Ace and cover both Rj and Rjp, toolbar geometry, draft isolation, focus, keyboard behavior and slide reversal.
+The editor/lifecycle, processx and diagnostics blocks passed maintainer desktop acceptance on Windows and Ubuntu-26.04 WSL2 with both R interpreters (examples 05/06, including interruption/recovery). Tests distinguish draft edits from submitted code and keep the editor usable after errors.
 
-The processx follow-up has passed automated checks on Windows and Ubuntu 26.04 WSL2; the maintainer has also accepted example 05 with Embedded and System R on both platforms. Process tests cover UTF-8, long output, nonzero status, timeout, checkpoint restart, recovery and descendant cleanup. Analysis lifecycle tests use the actual Rj/Rjp classes and subprocess transport, using the real dataset RDS round-trip, with no shared-memory acquisition fixture. The child no longer requires jmvconnect for dataset transport; it uses the already-required jmvcore/evaluate evaluator packages. Tests also cover a missing dependency followed by a worker that remains alive, early process termination on the completed error record, and rerunning the same analysis after an error. Linux tests distinguish host System R from the R executable inside Flatpak; isolated test dependencies are not installed into user libraries. Existing R discovery inside Flatpak may resolve its bundled R; this change does not introduce a host-R bridge.
+The graphics block was built and installed on Windows and Ubuntu-26.04 WSL2. Automated checks cover both R evaluators, offline Chromium rendering under CSP, Html/Svg/Image, dimensions, input escaping, no RNG consumption, Chart canvas reuse, acknowledgement without rerun, native save/reload and the external OMV round-trip. Windows examples 07/08/09 passed maintainer visual acceptance. In WSL2 the maintainer accepted example 09 with both R modes and the external OMV preview/save workflow. Examples 07/08 were not separately reported as manual Linux checks in this round; automated Linux helper/dimension/capture tests passed. No macOS GUI acceptance is claimed.
 
-No macOS build or GUI acceptance is claimed. Older jamovi/jmvcore versions have not been certified; the Svg helper requires a core exposing the native Svg result class. On Ubuntu the native resize grip is displayed at the lower left in Pj, official Rj and MetaJam as well; this branch does not claim to fix that jamovi positioning issue. The official Rj resize behavior and the grip's placement are separate issues.
+The known Ubuntu lower-left resize grip belongs to jamovi and is also visible with official Rj/other modules; this proposal does not claim to fix it. CI success is distinct from manual desktop acceptance.
 
-## Build and tests
+## Running the checks
 
-Build using the standard jmvtools workflow. Before building run `Rscript tools/update_version.R .` to synchronize the UI version badge. Do not edit the generated badge manually. Tests/docs/examples are repository resources, excluded from the runtime R/JMO payload.
+R integration scripts take the source root first and use a compiled Rj. Engine checks use jamovi R; `MZRJ_TEST_LIBS` may select the dependency library. Set `MZRJ_SYSTEM_RSCRIPT` for real child transport tests; `MZRJ_SYSTEM_TEST_LIBS` optionally confines child dependencies to a test-only directory.
 
-R integration scripts accept the source/build root as their first argument and need a compiled/installed Rj. Use jamovi's R for engine tests; optional library paths can be provided with `MZRJ_TEST_LIBS`. For System R transport tests set `MZRJ_SYSTEM_RSCRIPT` to its executable. Examples 01/02 exercise editor/OMV features; example 04 compares ordinary plotting with per-result Image/Svg sizes. Example 05 checks the processx preview and includes an optional interruption probe. `tests/process_runner.R`, `tests/system_omv.R` and `tests/system_lifecycle.R` exercise the subprocess runner and remote transport. An isolated child dependency library can be supplied to the latter two using `MZRJ_SYSTEM_TEST_LIBS`.
+`tests/shared_graphics.R SOURCE OUTPUT` creates fixtures from the actual R evaluator. `tests/shared_graphics.cjs SOURCE OUTPUT_PARENT` checks the two evaluator fixture directories using Playwright (`MZRJ_PLAYWRIGHT`, `MZRJ_CHROME` optional). `tests/graphics_capture.R SOURCE OUTPUT_PARENT` exercises actual Analysis save/load/PNG acknowledgement for Rj/Rjp and both R modes. Existing lifecycle/diagnostic/OMV/native-resize tests remain applicable.
 
-Run `tests/ui/ui_preview.test.js` with Node and Playwright. Optional environment variables: `MZRJ_PLAYWRIGHT`, `MZRJ_CHROME`, `MZRJ_UI_OUTPUT`. It reads the current source and does not patch jamovi or install a module.
-
-The working branch is intentionally separate from master. No upstream merge, release or graphics-library expansion is part of this proposal.
+The author will submit the proposal toward upstream for Core Team review. No automatic merge into the fork's main, upstream merge or public release is part of this graphics preview.

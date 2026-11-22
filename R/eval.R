@@ -91,6 +91,15 @@ eval <- function(script, data, echo, root, figWidth=400, figHeight=300, saveColu
     eval.env$mzrjShowSvg <- function(plot, width=NULL, height=NULL, name=NULL, title='')
         nativeGraphic(plot,width,height,name,title,'Svg')
 
+    # Older internal callers serialize only eval() for ordinary R plots.
+    # Production Embedded/System paths also provide the graphics factory.
+    if(exists('.mzRj_graphicsFactory',mode='function',inherits=TRUE)) {
+        assets <- sourceInfo$graphicsAssets
+        if(is.null(assets)) assets <- .mzRj_graphicsAssets()
+        graphics <- .mzRj_graphicsFactory(root,options,env,assets,.,sourceInfo$messages)
+        list2env(graphics,envir=eval.env)
+    }
+
     text_handler <- function(object, capture=TRUE) {
 
         if (inherits(object, 'ResultsElement')) {
