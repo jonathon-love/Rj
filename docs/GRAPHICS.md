@@ -11,6 +11,7 @@ These helpers are available in the editor and in Service scripts, with Embedded 
 | `mzrjShowBar(data, category, value=NULL, stat="count", ...)` | Count, sum, mean or one value per category | D3 or Plotly |
 | `mzrjShowBoxplot(data, variable, group=NULL, ...)` | R type-7 quartiles; observed 1.5-IQR whiskers | D3 or Plotly |
 | `mzrjShowHistogram(data, variable, bins="FD", density=FALSE, ...)` | R-selected breaks; explicit left-closed bins, final upper bound included | D3 |
+| `mzrjShowBarberJohnson(data, ...)` | Hospital bed utilisation; raw capacity/bed-days/exits or explicit precomputed indicators | Shared D3; four views |
 | `mzrjShowHeatmap(matrix, ...)` | Finite numeric matrix with optional row/column labels | Plotly |
 
 Convenience names `mzrjShowPlotlyScatter`, `mzrjShowPlotlyLine`, `mzrjShowPlotlyBar`, `mzrjShowPlotlyBoxplot` and `mzrjShowPlotlyHeatmap` select Plotly directly. These displays are descriptive. No regression, significance test, confidence interval or causal interpretation is implied.
@@ -86,3 +87,9 @@ Examples: [07 shared renderers](../examples/07_shared_graphics.R), [08 dimension
 Editable common renderer sources live in mzGraphics. Modules carry generated bundles plus their content manifest and vendor licenses; runtime does not reach into another checkout. Do not edit minified bundles or create a separate R-specific D3/Plotly rendering engine. The adapter owns R validation, summaries, translation, stable result names and native result acknowledgement.
 
 Automated Windows and Linux engine checks cover both R interpreters, native acknowledgement/save/reload, explicit/global dimensions, input escaping and the existing Rj/Rjp lifecycle. Offline Chromium checks cover actual rendered content under CSP, including colored heatmap cells, Chart canvas reuse and multiple-result layout. Windows examples 07/08/09 passed maintainer visual acceptance. Example 09 passed maintainer checks with both R modes in WSL2; the external OMV preview/save workflow was also accepted. These checks do not claim macOS GUI acceptance.
+
+## Hospital Barber–Johnson nomograms
+
+`mzrjShowBarberJohnson` provides TOI–ALOS, TOI–BTO, ordered ward trajectories and vertically faceted views. It accepts locally selected reference scenarios without treating them as universal clinical targets. It returns indicators in an R data frame and can add a native indicator table. See the complete [English guide](BARBER_JOHNSON.md), [guida italiana](BARBER_JOHNSON_IT.md) and self-contained `examples/10_barber_johnson.R`; the matching synthetic CSV is in `examples/data`. No optional R package or Python is needed.
+
+Native Image conversion sends one PNG at a time and waits for acknowledgement before advancing. Cancelling or changing to Html discards obsolete captures; capture failures are visible. Resizing one native Image preserves the other results, table and original dimension bases without executing R or restarting capture, including across jamovi's INIT/save/fresh-RUN phases. These fixes apply to other graphic helpers too. Native Svg containers allow their requested size without internal clipping. The known lower-left or unresponsive native grip on some Linux installations remains a jamovi limitation: explicit width/height or popup dimensions are the alternative.

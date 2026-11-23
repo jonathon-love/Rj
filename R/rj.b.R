@@ -8,13 +8,16 @@ RjClass <- R6::R6Class(
     private = list(
         .editorUiOnly=FALSE,
         .graphicCaptureOnly=FALSE,
+        .resultsUiOnly=FALSE,
         .postInit=function() .mzRj_omvInfo(self),
         .run = function() {
             if(private$.graphicCaptureOnly) {
+                on.exit({private$.graphicCaptureOnly<-FALSE;private$.resultsUiOnly<-FALSE;
+                    .mzRj_clearGraphicCapture(self)},add=TRUE)
                 .mzRj_applyGraphicCapture(self)
-                .mzRj_clearGraphicCapture(self)
                 return()
             }
+            if(private$.resultsUiOnly) {private$.resultsUiOnly<-FALSE;return()}
             if(nzchar(self$options$graphicCapture)) .mzRj_clearGraphicCapture(self)
             if(.mzRj_omvAction(self)) return()
             if (isTRUE(self$options$saveEditorScript)) {
@@ -36,7 +39,7 @@ RjClass <- R6::R6Class(
             context$data <- .mzRj_dataext(self)
             code <- .mzRj_editorCode(self)
             sourceInfo <- .mzRj_editorSources(self)
-            sourceInfo$messages <- c(.mzRj_remoteMessages(self), .mzRj_graphicsMessages(self))
+            sourceInfo$messages <- c(.mzRj_remoteMessages(self), .mzRj_graphicsMessages(self), .mzRj_barberJohnsonMessages(self))
             sourceInfo$graphicsAssets <- .mzRj_graphicsAssets()
             echo <- self$options$output == 'echo'
             figWidth  <- self$options$figWidth
@@ -58,7 +61,7 @@ RjClass <- R6::R6Class(
                 on.exit(unlink(c(outputPath,dataextInput,dataextOutput,evaluatorPath,dataInput)),add=TRUE)
                 saveRDS(context$data,dataextInput)
                 saveRDS(self$data,dataInput)
-                writeLines(c('.mzRj_graphicsFactory <-',deparse(.mzRj_graphicsFactory),'.mzRj_eval <-',deparse(eval),'.mzRj_sourceInfo <-',deparse(sourceInfo),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
+                writeLines(c('.mzRj_barberJohnsonPrepare <-',deparse(.mzRj_barberJohnsonPrepare),'.mzRj_graphicsFactory <-',deparse(.mzRj_graphicsFactory),'.mzRj_eval <-',deparse(eval),'.mzRj_sourceInfo <-',deparse(sourceInfo),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
                     '. <- function(text) {value <- .mzRj_messages[[text]];if(is.null(value))text else value}'),evaluatorPath)
 
                 outputPath <- gsub('\\', '/', outputPath, fixed=TRUE)
@@ -254,6 +257,7 @@ RjClass <- R6::R6Class(
         .load=function(vChanges=character()) {
             private$.editorUiOnly <- FALSE
             private$.graphicCaptureOnly <- FALSE
+            private$.resultsUiOnly <- FALSE
 
             jmvcore:::initProtoBuf()
 
@@ -269,12 +273,14 @@ RjClass <- R6::R6Class(
 
                 oChanges <- private$.options$compProtoBuf(pb$options)
                 pending <- is.character(self$options$graphicCapture) && nzchar(self$options$graphicCapture)
+                resizeChanges <- grep('^results/.+/(widthScale|heightScale|width|height)$',oChanges,value=TRUE)
+                presentationChanges <- c(resizeChanges,'graphicCapture','editorState','createdColumns','dataextInfo')
                 private$.graphicCaptureOnly <- length(vChanges)==0L &&
                     ('graphicCapture' %in% oChanges || pending) &&
-                    all(oChanges %in% c('graphicCapture','editorState','createdColumns','dataextInfo'))
-                resizeChanges <- grep('^results/.+/(widthScale|heightScale|width|height)$',oChanges,value=TRUE)
+                    all(oChanges %in% presentationChanges)
                 resizeOnly <- length(vChanges)==0L && length(resizeChanges)>0L &&
-                    all(oChanges %in% c(resizeChanges,'editorState','createdColumns','dataextInfo'))
+                    all(oChanges %in% presentationChanges)
+                private$.resultsUiOnly <- resizeOnly
                 private$.editorUiOnly <- resizeOnly || (length(vChanges)==0L && length(oChanges)>0L &&
                     all(oChanges %in% c('editorState','saveEditorScript','dataextInfo')))
                 saving <- isTRUE(self$options$saveEditorScript) || isTRUE(self$options$saveOmvFile) ||
@@ -283,7 +289,14 @@ RjClass <- R6::R6Class(
                 private$.results$fromProtoBuf(pb$results,
                     if(saving)character() else oChanges,
                     if(saving)character() else vChanges)
-                if(resizeOnly) .mzRj_resizeImages(self$results,groupPB,resizeChanges)
+                # INIT saves new scales before a fresh RUN sees identical options.
+                rootState<-self$results$state
+                if(!is.list(rootState))rootState<-list()
+                if(isTRUE(rootState$mzRjNativeResize)&&length(vChanges)==0L&&
+                   all(oChanges %in% presentationChanges))private$.resultsUiOnly<-TRUE
+                rootState$mzRjNativeResize<-isTRUE(private$.resultsUiOnly)
+                self$results$setState(rootState)
+                if(private$.resultsUiOnly) .mzRj_resizeImages(self$results,groupPB,resizeChanges)
             }
 
             private$.clear(vChanges)

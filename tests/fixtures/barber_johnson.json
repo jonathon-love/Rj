@@ -1,0 +1,484 @@
+{
+  "data": {
+    "unit": [
+      "Medicine",
+      "Medicine",
+      "Medicine",
+      "Medicine",
+      "Surgery",
+      "Surgery",
+      "Surgery",
+      "Surgery",
+      "Rehabilitation",
+      "Rehabilitation",
+      "Rehabilitation",
+      "Rehabilitation"
+    ],
+    "period": [
+      "2025 Q1",
+      "2025 Q2",
+      "2025 Q3",
+      "2025 Q4",
+      "2025 Q1",
+      "2025 Q2",
+      "2025 Q3",
+      "2025 Q4",
+      "2025 Q1",
+      "2025 Q2",
+      "2025 Q3",
+      "2025 Q4"
+    ],
+    "period_order": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      1.0,
+      2.0,
+      3.0,
+      4.0
+    ],
+    "period_days": [
+      90.0,
+      91.0,
+      92.0,
+      92.0,
+      90.0,
+      91.0,
+      92.0,
+      92.0,
+      90.0,
+      91.0,
+      92.0,
+      92.0
+    ],
+    "beds": [
+      32.0,
+      32.0,
+      28.0,
+      28.0,
+      24.0,
+      24.0,
+      24.0,
+      24.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0
+    ],
+    "occupied_bed_days": [
+      2563.0,
+      2504.0,
+      2009.0,
+      2164.0,
+      1642.0,
+      1769.0,
+      1590.0,
+      1744.0,
+      1638.0,
+      1602.0,
+      1564.0,
+      1656.0
+    ],
+    "discharges": [
+      302.0,
+      313.0,
+      264.0,
+      277.0,
+      283.0,
+      340.0,
+      284.0,
+      349.0,
+      91.0,
+      94.0,
+      98.0,
+      100.0
+    ],
+    "clinical_area": [
+      "Medical",
+      "Medical",
+      "Medical",
+      "Medical",
+      "Surgical",
+      "Surgical",
+      "Surgical",
+      "Surgical",
+      "Rehabilitation",
+      "Rehabilitation",
+      "Rehabilitation",
+      "Rehabilitation"
+    ],
+    "alos": [
+      8.486754966887418,
+      8.0,
+      7.609848484848484,
+      7.812274368231047,
+      5.8021201413427566,
+      5.202941176470588,
+      5.598591549295775,
+      4.997134670487106,
+      18.0,
+      17.04255319148936,
+      15.959183673469388,
+      16.56
+    ],
+    "toi": [
+      1.0496688741721854,
+      1.3035143769968052,
+      2.147727272727273,
+      1.4873646209386282,
+      1.8303886925795052,
+      1.2205882352941178,
+      2.176056338028169,
+      1.329512893982808,
+      1.7802197802197801,
+      2.3191489361702127,
+      2.816326530612245,
+      1.84
+    ],
+    "bor": [
+      0.8899305555555556,
+      0.8598901098901099,
+      0.779891304347826,
+      0.8400621118012422,
+      0.7601851851851852,
+      0.809981684981685,
+      0.720108695652174,
+      0.7898550724637681,
+      0.91,
+      0.8802197802197802,
+      0.85,
+      0.9
+    ],
+    "capacity": [
+      2880.0,
+      2912.0,
+      2576.0,
+      2576.0,
+      2160.0,
+      2184.0,
+      2208.0,
+      2208.0,
+      1800.0,
+      1820.0,
+      1840.0,
+      1840.0
+    ]
+  },
+  "common": {
+    "unit": "unit",
+    "period": "period",
+    "period_days": "period_days",
+    "order": "period_order",
+    "group": "unit",
+    "facet": "unit",
+    "size_by_beds": true,
+    "scenarios": [
+      {
+        "label": "Range",
+        "bor": [
+          0.75,
+          0.85
+        ],
+        "toi": [
+          0.5,
+          3
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "kind": "barberJohnson",
+    "view": "toi_alos",
+    "title": "Barber–Johnson: hospital bed utilisation",
+    "ui": {
+      "xLabel": "Turnover interval (TOI, days)",
+      "yLabel": "ALOS (bed-days / discharges, days)",
+      "btoLabel": "BTO per {days} days",
+      "status": "Hover or focus a point to read its indicators. Click or press Enter to pin; Escape clears the selection.",
+      "detail": "{unit} / {period} · {days} days · ALOS {alos} d · TOI {toi} d · BOR {bor}% · BTO {bto} per observed period; {reference} per {basis} d",
+      "beds": "mean beds"
+    },
+    "points": [
+      {
+        "row": 1,
+        "unit": "Medicine",
+        "period": "2025 Q1",
+        "days": 90.0,
+        "alos": 8.486754966887418,
+        "toi": 1.0496688741721854,
+        "bor": 0.8899305555555556,
+        "bto": 9.4375,
+        "btoStandard": 38.27430555555555,
+        "beds": 32.0,
+        "group": "Medicine",
+        "facet": "Medicine",
+        "order": 1.0
+      },
+      {
+        "row": 2,
+        "unit": "Medicine",
+        "period": "2025 Q2",
+        "days": 91.0,
+        "alos": 8.0,
+        "toi": 1.3035143769968052,
+        "bor": 0.8598901098901099,
+        "bto": 9.78125,
+        "btoStandard": 39.23248626373626,
+        "beds": 32.0,
+        "group": "Medicine",
+        "facet": "Medicine",
+        "order": 2.0
+      },
+      {
+        "row": 3,
+        "unit": "Medicine",
+        "period": "2025 Q3",
+        "days": 92.0,
+        "alos": 7.609848484848484,
+        "toi": 2.147727272727273,
+        "bor": 0.779891304347826,
+        "bto": 9.428571428571429,
+        "btoStandard": 37.40683229813664,
+        "beds": 28.0,
+        "group": "Medicine",
+        "facet": "Medicine",
+        "order": 3.0
+      },
+      {
+        "row": 4,
+        "unit": "Medicine",
+        "period": "2025 Q4",
+        "days": 92.0,
+        "alos": 7.812274368231047,
+        "toi": 1.4873646209386282,
+        "bor": 0.8400621118012422,
+        "bto": 9.892857142857142,
+        "btoStandard": 39.24883540372671,
+        "beds": 28.0,
+        "group": "Medicine",
+        "facet": "Medicine",
+        "order": 4.0
+      },
+      {
+        "row": 5,
+        "unit": "Surgery",
+        "period": "2025 Q1",
+        "days": 90.0,
+        "alos": 5.8021201413427566,
+        "toi": 1.8303886925795052,
+        "bor": 0.7601851851851852,
+        "bto": 11.791666666666666,
+        "btoStandard": 47.82175925925926,
+        "beds": 24.0,
+        "group": "Surgery",
+        "facet": "Surgery",
+        "order": 1.0
+      },
+      {
+        "row": 6,
+        "unit": "Surgery",
+        "period": "2025 Q2",
+        "days": 91.0,
+        "alos": 5.202941176470588,
+        "toi": 1.2205882352941178,
+        "bor": 0.809981684981685,
+        "bto": 14.166666666666666,
+        "btoStandard": 56.82234432234432,
+        "beds": 24.0,
+        "group": "Surgery",
+        "facet": "Surgery",
+        "order": 2.0
+      },
+      {
+        "row": 7,
+        "unit": "Surgery",
+        "period": "2025 Q3",
+        "days": 92.0,
+        "alos": 5.598591549295775,
+        "toi": 2.176056338028169,
+        "bor": 0.720108695652174,
+        "bto": 11.833333333333334,
+        "btoStandard": 46.94746376811594,
+        "beds": 24.0,
+        "group": "Surgery",
+        "facet": "Surgery",
+        "order": 3.0
+      },
+      {
+        "row": 8,
+        "unit": "Surgery",
+        "period": "2025 Q4",
+        "days": 92.0,
+        "alos": 4.997134670487106,
+        "toi": 1.329512893982808,
+        "bor": 0.7898550724637681,
+        "bto": 14.541666666666666,
+        "btoStandard": 57.692481884057976,
+        "beds": 24.0,
+        "group": "Surgery",
+        "facet": "Surgery",
+        "order": 4.0
+      },
+      {
+        "row": 9,
+        "unit": "Rehabilitation",
+        "period": "2025 Q1",
+        "days": 90.0,
+        "alos": 18.0,
+        "toi": 1.7802197802197801,
+        "bor": 0.91,
+        "bto": 4.55,
+        "btoStandard": 18.452777777777776,
+        "beds": 20.0,
+        "group": "Rehabilitation",
+        "facet": "Rehabilitation",
+        "order": 1.0
+      },
+      {
+        "row": 10,
+        "unit": "Rehabilitation",
+        "period": "2025 Q2",
+        "days": 91.0,
+        "alos": 17.04255319148936,
+        "toi": 2.3191489361702127,
+        "bor": 0.8802197802197802,
+        "bto": 4.7,
+        "btoStandard": 18.851648351648354,
+        "beds": 20.0,
+        "group": "Rehabilitation",
+        "facet": "Rehabilitation",
+        "order": 2.0
+      },
+      {
+        "row": 11,
+        "unit": "Rehabilitation",
+        "period": "2025 Q3",
+        "days": 92.0,
+        "alos": 15.959183673469388,
+        "toi": 2.816326530612245,
+        "bor": 0.85,
+        "bto": 4.9,
+        "btoStandard": 19.440217391304348,
+        "beds": 20.0,
+        "group": "Rehabilitation",
+        "facet": "Rehabilitation",
+        "order": 3.0
+      },
+      {
+        "row": 12,
+        "unit": "Rehabilitation",
+        "period": "2025 Q4",
+        "days": 92.0,
+        "alos": 16.56,
+        "toi": 1.84,
+        "bor": 0.9,
+        "bto": 5.0,
+        "btoStandard": 19.836956521739133,
+        "beds": 20.0,
+        "group": "Rehabilitation",
+        "facet": "Rehabilitation",
+        "order": 4.0
+      }
+    ],
+    "turnoverDays": 365.0,
+    "occupancyLines": [
+      0.5,
+      0.7,
+      0.8,
+      0.85,
+      0.9
+    ],
+    "turnoverLines": [
+      15.0,
+      25.0,
+      35.0,
+      50.0
+    ],
+    "alosLines": [
+      3.0,
+      5.0,
+      7.0,
+      10.0,
+      14.0
+    ],
+    "scenarios": [
+      {
+        "label": "Range",
+        "bor": [
+          0.75,
+          0.85
+        ],
+        "toi": [
+          0.5,
+          3.0
+        ]
+      }
+    ],
+    "sizeByBeds": true,
+    "pointLabels": false,
+    "xMax": 3.520408163265306,
+    "yMax": 22.5,
+    "btoMax": 72.11560235507247,
+    "note": "N = 12 unit-periods; 0 incomplete rows excluded; 0 observations outside the displayed limits. BTO reference period: 365 days. BTO on this basis is a rate rescaling, not a forecast. Reference scenarios are user-selected, not quality or efficiency classifications. References: Range: BOR 75%–85%; TOI 0.5–3 d.",
+    "excludedRows": [],
+    "outside": 0
+  },
+  "cases": [
+    {
+      "input_mode": "raw",
+      "view": "toi_alos"
+    },
+    {
+      "input_mode": "raw",
+      "view": "toi_bto"
+    },
+    {
+      "input_mode": "raw",
+      "view": "trajectory"
+    },
+    {
+      "input_mode": "raw",
+      "view": "faceted"
+    },
+    {
+      "input_mode": "toi_alos",
+      "view": "toi_alos"
+    },
+    {
+      "input_mode": "toi_alos",
+      "view": "toi_bto"
+    },
+    {
+      "input_mode": "toi_alos",
+      "view": "trajectory"
+    },
+    {
+      "input_mode": "toi_alos",
+      "view": "faceted"
+    },
+    {
+      "input_mode": "alos_bor",
+      "view": "toi_alos"
+    },
+    {
+      "input_mode": "alos_bor",
+      "view": "toi_bto"
+    },
+    {
+      "input_mode": "alos_bor",
+      "view": "trajectory"
+    },
+    {
+      "input_mode": "alos_bor",
+      "view": "faceted"
+    },
+    {
+      "available_bed_days": "capacity"
+    }
+  ]
+}

@@ -2,16 +2,16 @@
   "name": "mzGraphics",
   "version": "1.0.0",
   "protocol": 1,
-  "build": "f010ae88bb1aa13e",
-  "sourceSha256": "f010ae88bb1aa13ef3e5b7d66a7b9fd5b12c6754dcf7ef180daeba3203a74acb",
+  "build": "c911d56b6facee28",
+  "sourceSha256": "c911d56b6facee287737a9070d51f41c7f9ca400cc9e3dda9a39076ce18e643d",
   "tools": {
     "terser": "5.51.2",
     "clean-css": "5.3.3"
   },
-  "builderSha256": "3d645dd49ff9a66bce254744416b8d8a05eb47c6946ea4d8e4759fa706a8623d",
+  "builderSha256": "674f2f3a886f6b85d5f3d047a590ce1eda5fb3efbc8b0c0b1d979a85b7f85cb2",
   "lockSha256": "815c01fa8e7774f77abb3dbf91f44518ebae5e8200003a0fd8df68ff26ed57fb",
   "inputs": {
-    "src/d3/core.js": "7288fb791c107edc93febc6d084cfe70e50d8757a682e96d88c8a4e84f54909a",
+    "src/d3/core.js": "4cb3432b468f5eab4b5955683056179aa65b498c092cdb22b40e13d389e2e2a9",
     "src/d3/scatter.js": "440c6b84e65b1525c3e21db2a97ad0f7a35a3309e7df12d669e4dc8649ab79e5",
     "src/d3/histogram.js": "7c901d3108c69f48243e3d8e8c0a5fc7440aa32beb305f6d67a1eb69eb99663e",
     "src/d3/boxplot.js": "487dd6145e307b0829e4381cc7c872340a32dfdb2ca3a3ea0a3d9bb3ab324aec",
@@ -23,7 +23,8 @@
     "src/d3/paired.js": "0c4a70d6b96d4654da3eff6ce27a571e38eea01ecf6f03668fccd3fd0bacd09a",
     "src/d3/test_distribution.js": "706bddc513c458c80e8b99e354a5f70a9ba49631bf68783bb89f03466cfe0346",
     "src/d3/interaction.js": "85254dda8ff2a99e9c919a35f91fd82d383cd38b58107043a5d9df5792ed933c",
-    "src/d3/common.css": "9c5e95638c5faf601f413ac041f5a61f49eaf12f61d050650371b664540b8a7e",
+    "src/d3/barber_johnson.js": "812b3c7b95d10b863e9575dc3ab3d7a1ef39b8903de11bc702dea7889ff3d9c7",
+    "src/d3/common.css": "59e063c4b6e41a90e1977678ce5378dff81e8a5271e740efe91538bf5ebe9546",
     "src/common/zoom.css": "f3e7e202e7b6d84131216d1aa1c787cd3b76d4f1dd704585c5e6041bce1909f2",
     "src/plotly/interaction.js": "d3f7bb20d46c4f28e99d175ae7c0a049d55d222f17fbf4544894faf272529471",
     "src/plotly/recipes.js": "544b00b6d16085c7124b116241ec0dc85fab0559d00fc6f82ffab3fef9bc0018",
@@ -32,15 +33,15 @@
   },
   "assets": {
     "mzD3.min.js": {
-      "sha256": "18735dcf908e9635ccc8c08a50da39a1a06615281ec9447c4f7c68f1da5d663a",
-      "bytes": 38536
+      "sha256": "d9f5ce497ac5d3305d087a59dabdeb308a6bfc2ba828d33c61d64f4faeff1e89",
+      "bytes": 45889
     },
     "mzD3.min.css": {
-      "sha256": "921d09193ebb8bedce94f0f2de67c5eda0ba95900119d80e720968d2a77d46aa",
-      "bytes": 5654
+      "sha256": "bbf4fe4d2ca9a0a1b3edff0a54b900ee8491decc4aafc211f26ce91f7110a8a7",
+      "bytes": 6270
     },
     "mzPlotly.min.js": {
-      "sha256": "d76cb1bbfdc87c690c8f111418acd149084d9bfe8f43b51ffa6e78c35d36fd04",
+      "sha256": "938b4a38a6243e7ef2d76cb94af36359eb6daa394a918c627eac30da2735d040",
       "bytes": 16817
     },
     "mzPlotly.min.css": {

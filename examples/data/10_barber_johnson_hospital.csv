@@ -1,0 +1,13 @@
+unit,period,period_order,period_days,beds,occupied_bed_days,discharges,clinical_area
+Medicine,2025 Q1,1,90,32,2563,302,Medical
+Medicine,2025 Q2,2,91,32,2504,313,Medical
+Medicine,2025 Q3,3,92,28,2009,264,Medical
+Medicine,2025 Q4,4,92,28,2164,277,Medical
+Surgery,2025 Q1,1,90,24,1642,283,Surgical
+Surgery,2025 Q2,2,91,24,1769,340,Surgical
+Surgery,2025 Q3,3,92,24,1590,284,Surgical
+Surgery,2025 Q4,4,92,24,1744,349,Surgical
+Rehabilitation,2025 Q1,1,90,20,1638,91,Rehabilitation
+Rehabilitation,2025 Q2,2,91,20,1602,94,Rehabilitation
+Rehabilitation,2025 Q3,3,92,20,1564,98,Rehabilitation
+Rehabilitation,2025 Q4,4,92,20,1656,100,Rehabilitation

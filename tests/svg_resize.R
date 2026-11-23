@@ -28,6 +28,7 @@ for(axis in c('width','height')){
  pb$names<-c(pb$names,paste('results','test_svg',axis,sep='/'))
  pb$add('options',optionPB(if(axis=='width')810 else 450))
 }
-b<-make(pb);b$run()
+init<-make(pb);init$serialize(final=TRUE);init$.save()
+b<-make(init$options$asProtoBuf());b$run()
 stopifnot(readLines(counter)=='1',identical(b$results$get('test_svg')$content,before))
 cat('Native Svg resize restores content without rerunning R PASSED\n')

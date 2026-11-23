@@ -29,6 +29,20 @@ for(mode in c('html','svg','image')) {
   manifest[[length(manifest)+1L]]<-list(file=filename,name=name,mode=mode)
  }
 }
+# Barber–Johnson uses the same shared renderer for all four views and formats.
+for(mode in c('html','svg','image')) {
+ code<-paste(readLines(file.path(root,'examples/10_barber_johnson.R'),encoding='UTF-8'),collapse='\n')
+ code<-sub('RESULT_TYPE <- "html"',paste0('RESULT_TYPE <- "',mode,'"'),code,fixed=TRUE)
+ results<-run(code,data.frame(),FALSE)
+ for(view in c('toi_alos','toi_bto','trajectory','faceted')) {
+  name<-paste0('hospital_',view);item<-results$get(name)
+  stopifnot(inherits(item,if(mode=='svg')'Svg'else'Html'))
+  if(mode!='html')stopifnot(!grepl('<details',item$content,fixed=TRUE))
+  filename<-paste0(name,'_',mode,'.html');writeLines(item$content,file.path(out,filename),useBytes=TRUE)
+  manifest[[length(manifest)+1L]]<-list(file=filename,name=name,mode=mode)
+ }
+ stopifnot(inherits(results$get('hospital_toi_alos_indicators'),'Table'))
+}
 # No RNG consumption: graphics preparation cannot change subsequent analysis.
 set.seed(42);expected<-runif(4);set.seed(42)
 run('mzrjShowBoxplot(iris,"Sepal.Length",group="Species");mzrjShowChart("bar",list(list(data=c(1,2))),labels=c("A","B"))',data.frame(),FALSE)

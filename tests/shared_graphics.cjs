@@ -13,7 +13,12 @@ try {for(const mode of ['embedded','system']) for(const f of JSON.parse(fs.readF
  const mount=async html=>page.evaluate(html=>{const target=document.querySelector('.content');target.innerHTML=html;for(const old of target.querySelectorAll('script')){const script=document.createElement('script');script.textContent=old.textContent;document.head.appendChild(script);script.remove();old.remove();}},html);
  await mount(content);
  if(f.mode==='html'){
-  if(f.name==='iris_d3'||f.name==='length_histogram'){
+  if(f.name.startsWith('hospital_')){
+   await page.waitForSelector('.mz-bj-point');assert.equal(await page.locator('.mz-bj-point').count(),12);
+   const range=page.locator('input[type=range]').first();await range.fill('130');await range.dispatchEvent('input');
+   await page.locator('.mz-d3-group').first().click();
+   assert(await page.locator('.mz-bj-point[style*="display: none"]').count()>0);
+  }else if(f.name==='iris_d3'||f.name==='length_histogram'){
    await page.waitForSelector('.mz-d3-mark');if(f.name==='iris_d3')assert.equal(await page.locator('.mz-d3-mark').count(),150);
    if(f.name==='iris_d3'){await page.locator('.mz-d3-group').first().click();assert(await page.locator('.mz-d3-mark[style*="display: none"]').count()>0);}
    const slider=page.locator('.mz-d3-zoom input');
@@ -48,7 +53,7 @@ try {for(const mode of ['embedded','system']) for(const f of JSON.parse(fs.readF
   const flow=await page.evaluate(()=>({graphic:document.querySelector('.jmv-results-html').getBoundingClientRect().bottom,table:document.getElementById('after').getBoundingClientRect().top}));
   assert(flow.table>=flow.graphic-1,'following table overlaps graphic');
  }else if(f.mode==='svg'){
-  if(f.name==='iris_d3'||f.name==='length_histogram')await page.waitForSelector('svg.jmv-results-svg-content');
+  if(f.name.startsWith('hospital_')||f.name==='iris_d3'||f.name==='length_histogram')await page.waitForSelector('svg.jmv-results-svg-content');
   else await page.waitForFunction(()=>document.querySelector('svg.jmv-results-svg-content image')?.getAttribute('href')?.startsWith('data:image/png'));
   assert.equal(await page.locator('details').count(),0);
  }else{

@@ -113,7 +113,7 @@
     d3 <- function(payload,name=NULL,title=NULL,width=NULL,height=NULL,result_type='html',
                    accordion=TRUE,expanded=TRUE,accordion_type='line',color='#3e6da9') {
         if(!is.list(payload)||!scalar(payload$kind)||!payload$kind %in%
-           c('scatter','line','bar','boxplot','histogram','intervals','correlation','paired','distribution','test_distribution','interaction'))
+           c('scatter','line','bar','boxplot','histogram','intervals','correlation','paired','distribution','test_distribution','interaction','barberJohnson'))
             error(.('Use a supported D3 payload kind.'))
         if(!scalar(color)||!grepl('^#[0-9a-fA-F]{6}$',color))
             error(.('Use a six-digit hexadecimal graphic color.'))
@@ -367,7 +367,32 @@
         if(!scalar(content)) error(.('HTML content must be a single string.'))
         emit(content,name,title,'html',character(),accordion,expanded,accordion_type)
     }
-    list(mzrjShowD3=d3,mzrjShowPlotly=plotly,mzrjShowChart=chart,mzrjShowHtml=html,
+    barberJohnson <- function(dataset,...,name=NULL,title=NULL,width=NULL,height=NULL,
+        result_type='html',accordion=TRUE,expanded=TRUE,accordion_type='line',tables=TRUE) {
+        if(!boolean(tables))error(.('tables must be a logical value.'))
+        payload<-.mzRj_barberJohnsonPrepare(dataset,...,title=title,translate=.)
+        base<-resultName(name);tableName<-paste0(base,'_indicators')
+        if(tables&&!is.null(root$get(tableName)))error(.('The indicator table name already exists; choose a different name.'))
+        rows<-lapply(payload$points,function(p)list(Unit=p$unit,Period=p$period,Days=p$days,
+            ALOS=p$alos,TOI=p$toi,BOR_percent=100*p$bor,BTO_period=p$bto,
+            BTO_reference=p$btoStandard,Mean_beds=if(is.null(p$beds))NA_real_ else p$beds))
+        d3(payload,base,payload$title,width,height,result_type,accordion,expanded,accordion_type,color='#587295')
+        if(tables) {
+            item<-jmvcore::Table$new(options,name=tableName,title=.('Hospital bed utilisation indicators'),notes=list(payload$note))
+            headings<-c(Unit=.('Unit'),Period=.('Period'),Days=.('Period days'),ALOS=.('ALOS (days)'),
+                TOI=.('TOI (days)'),BOR_percent=.('BOR (%)'),BTO_period=.('BTO observed period'),
+                BTO_reference=.('BTO reference period'),Mean_beds=.('Mean available beds'))
+            for(key in names(headings))item$addColumn(name=key,title=headings[[key]],
+                type=if(key %in% c('Unit','Period'))'text'else'number')
+            for(i in seq_along(rows))item$addRow(rowKey=i,values=rows[[i]])
+            root$add(item)
+        }
+        invisible(list(indicators=do.call(rbind,lapply(rows,as.data.frame)),
+            excluded_rows=unlist(payload$excludedRows,use.names=FALSE),outside=payload$outside,
+            turnover_days=payload$turnoverDays,scenarios=payload$scenarios))
+    }
+    list(mzrjShowBarberJohnson=barberJohnson,
+         mzrjShowD3=d3,mzrjShowPlotly=plotly,mzrjShowChart=chart,mzrjShowHtml=html,
          mzrjShowScatter=scatter,mzrjShowLine=line,mzrjShowBar=bar,mzrjShowBoxplot=box,
          mzrjShowHistogram=histogram,mzrjShowHeatmap=heatmap,
          mzrjShowPlotlyScatter=function(...)scatter(...,renderer='plotly'),

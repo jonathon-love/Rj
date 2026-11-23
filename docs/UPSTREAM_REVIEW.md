@@ -39,4 +39,10 @@ R integration scripts take the source root first and use a compiled Rj. Engine c
 
 `tests/shared_graphics.R SOURCE OUTPUT` creates fixtures from the actual R evaluator. `tests/shared_graphics.cjs SOURCE OUTPUT_PARENT` checks the two evaluator fixture directories using Playwright (`MZRJ_PLAYWRIGHT`, `MZRJ_CHROME` optional). `tests/graphics_capture.R SOURCE OUTPUT_PARENT` exercises actual Analysis save/load/PNG acknowledgement for Rj/Rjp and both R modes. Existing lifecycle/diagnostic/OMV/native-resize tests remain applicable.
 
-The author will submit the proposal toward upstream for Core Team review. No automatic merge into the fork's main, upstream merge or public release is part of this graphics preview.
+The proposal is open for Core Team review in [upstream PR 15](https://github.com/jonathon-love/Rj/pull/15). No automatic merge into the fork's main, upstream merge or public release is part of this graphics preview.
+
+## Barber–Johnson addition (development preview)
+
+Example 10 and bilingual guides document hospital indicator definitions, raw/precomputed input, actual period days, four presentations and user-selected reference scenarios. Numerical fixtures compare all four views and three input routes with the accepted Pj implementation. The frontend bundles are shared byte-for-byte with Pj; the R adapter adds no Python or optional R dependency.
+
+The multi-Image lifecycle regression covers Rj/Rjp and both R modes: individual PNG acknowledgements, INIT/save/fresh-RUN state restoration, repeated independent native resizes, unchanged neighbouring images/table, cancellation and error recovery. The shared graphic suite also covers all four Barber–Johnson views in Html/Svg/Image. The Windows addition passed maintainer visual acceptance with both R interpreters. The same source snapshot passed Linux engine checks and offline rendering of Linux-generated fixtures; the maintainer also accepted the Linux addition with both R interpreters. The known blocked lower-left native Image grip remains an exception; the maintainer reproduced it in graphics from third-party modules on the same Ubuntu environment. Run `tests/barber_johnson.R SOURCE` for numeric parity and `tests/barber_johnson_lifecycle.cjs` for the full native state flow (set MZRJ_TEST_ROOT, MZRJ_TEST_WORK, MZRJ_RSCRIPT, MZRJ_SYSTEM_RSCRIPT, MZRJ_PLAYWRIGHT and MZRJ_CHROME).

@@ -49,7 +49,8 @@ for(prefix in c('Rj','Rjp'))for(engine in c('embedded','system')) {
    key<-paste('results',first,paste0(axis,'Scale'),sep='/');i<-match(key,pb$names);value<-scale[if(axis=='width')1 else 2]
    if(is.na(i)){pb$names<-c(pb$names,key);pb$add('options',optionPB(value))}else pb$options[[i]]<-optionPB(value)
   }
-  b<-make(pb);b$run()
+  init<-make(pb);init$serialize(final=TRUE);init$.save()
+  b<-make(init$options$asProtoBuf());b$run()
   image<-b$results$get(first);expected<-list(width=as.integer(400*scale[1]),height=as.integer(300*scale[2]))
   stopifnot(identical(image$size,expected),identical(b$results$get(second)$size,list(width=400L,height=300L)),readLines(counter)=='1',!is.null(image$state))
   image$.createImages();b$.save()

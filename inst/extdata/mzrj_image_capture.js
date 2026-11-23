@@ -36,21 +36,29 @@ try{
  const displayScale=Math.min(1,2000/width,2000/height);
  const entry={name:request.name,token:request.token,content,width:Math.max(1,Math.round(width*displayScale)),height:Math.max(1,Math.round(height*displayScale))};
  let queue=window.mzRjNativeImageQueue;
+ if(queue&&queue.version!==2){clearTimeout(queue.timer);for(const timer of queue.ackTimers?.values()||[])clearTimeout(timer);queue.observer?.disconnect();queue=null;}
  if(!queue){
-  queue=window.mzRjNativeImageQueue={entries:new Map(),ackTimers:new Map(),timer:null};
-  queue.prune=()=>{for(const [id]of queue.entries)if(!document.getElementById(id)){clearTimeout(queue.ackTimers?.get(id));queue.ackTimers?.delete(id);queue.entries.delete(id);}};
-  queue.observer=new MutationObserver(()=>queue.prune());queue.observer.observe(document.documentElement,{childList:true,subtree:true});
+  queue=window.mzRjNativeImageQueue={version:2,entries:new Map(),ackTimers:new Map(),failures:new Map(),inFlight:null,timer:null};
+  queue.remove=id=>{clearTimeout(queue.ackTimers.get(id));queue.ackTimers.delete(id);queue.entries.delete(id);queue.failures.delete(id);if(queue.inFlight===id)queue.inFlight=null;};
+  queue.prune=()=>{for(const [id]of queue.entries)if(!document.getElementById(id))queue.remove(id);};
+  queue.schedule=()=>{if(queue.timer!==null||queue.inFlight!==null||!queue.entries.size)return;queue.timer=setTimeout(queue.flush,50);};
+  queue.flush=()=>{
+   queue.timer=null;queue.prune();if(queue.inFlight!==null||!queue.entries.size)return;
+   const [id,image]=queue.entries.entries().next().value;queue.inFlight=id;
+   const reject=error=>{const report=queue.failures.get(id);queue.remove(id);if(report)report(error);queue.schedule();};
+   queue.ackTimers.set(id,setTimeout(()=>reject(Error(_('the native Image result was not acknowledged; run the script again'))),30000));
+   try{
+    // One bounded option message at a time. The Results replacement is the ack.
+    const sent=window.setOption('graphicCapture',JSON.stringify({version:1,images:[image]}));
+    if(sent&&typeof sent.catch==='function')sent.catch(reject);
+   }catch(error){reject(error);}
+  };
+  queue.observer=new MutationObserver(()=>{queue.prune();queue.schedule();});
+  queue.observer.observe(document.documentElement,{childList:true,subtree:true});
  }
- queue.prune();queue.entries.set(request.root,entry);clearTimeout(queue.timer);
- const accepted=queue.entries.size<=20&&JSON.stringify({version:1,images:Array.from(queue.entries.values())}).length<=1500000;
- if(!accepted){queue.entries.delete(request.root);fail(Error(_('too many or oversized pending PNG captures; reduce the number or size of figures')));}
- queue.timer=setTimeout(()=>{queue.prune();const payload=JSON.stringify({version:1,images:Array.from(queue.entries.values())});
-  if(queue.entries.size)window.setOption('graphicCapture',payload);
- },50);
- if(accepted){
-  root.dataset.mzrjImageReady='true';
-  if(!queue.ackTimers)queue.ackTimers=new Map();
-  if(!queue.ackTimers.has(request.root))queue.ackTimers.set(request.root,setTimeout(()=>{queue.ackTimers.delete(request.root);if(root.isConnected)fail(Error(_('the native Image result was not acknowledged')));},30000));
- }
+ queue.prune();
+ if(!queue.entries.has(request.root)&&queue.entries.size>=20)throw Error(_('too many pending PNG captures; split the figures across analyses'));
+ queue.entries.set(request.root,entry);queue.failures.set(request.root,fail);
+ root.dataset.mzrjImageReady='true';queue.schedule();
 }catch(error){fail(error);}
 })();

@@ -54,6 +54,8 @@
     'the graphic did not finish rendering'=.('the graphic did not finish rendering'),
     'the native Image capture bridge is unavailable'=.('the native Image capture bridge is unavailable'),
     'the native Image result was not acknowledged'=.('the native Image result was not acknowledged'),
+    'the native Image result was not acknowledged; run the script again'=.('the native Image result was not acknowledged; run the script again'),
+    'too many pending PNG captures; split the figures across analyses'=.('too many pending PNG captures; split the figures across analyses'),
     'too many or oversized pending PNG captures; reduce the number or size of figures'=.('too many or oversized pending PNG captures; reduce the number or size of figures'),
     'zmid must be finite and within the selected color range.'=.('zmid must be finite and within the selected color range.')
 )
