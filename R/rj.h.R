@@ -7,12 +7,21 @@ RjOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     public = list(
         initialize = function(
             code = "\n# summary(data[1:3])\n",
+            editorState = NULL,
+            saveEditorScript = FALSE,
+            editorCleared = FALSE,
+            omvFile = NULL,
+            saveOmvFile = FALSE,
+            previewDataext = FALSE,
+            previewDataextRequest = FALSE,
+            dataextInfo = NULL,
             R = "bundled",
             vars = NULL,
             output = "noEcho",
             figWidth = "",
             figHeight = "",
-            toggle = FALSE, ...) {
+            toggle = FALSE,
+            graphicCapture = "", ...) {
 
             super$initialize(
                 package="Rj",
@@ -25,6 +34,75 @@ RjOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 code,
                 default="\n# summary(data[1:3])\n",
                 hidden=TRUE)
+            private$..editorState <- jmvcore::OptionGroup$new(
+                "editorState",
+                editorState,
+                hidden=TRUE,
+                passive=TRUE,
+                elements=list(
+                    jmvcore::OptionString$new(
+                        "draft",
+                        NULL,
+                        default=""),
+                    jmvcore::OptionBool$new(
+                        "hasDraft",
+                        NULL,
+                        default=FALSE),
+                    jmvcore::OptionString$new(
+                        "filename",
+                        NULL,
+                        default=""),
+                    jmvcore::OptionString$new(
+                        "baseline",
+                        NULL,
+                        default=""),
+                    jmvcore::OptionString$new(
+                        "serviceCode",
+                        NULL,
+                        default=""),
+                    jmvcore::OptionString$new(
+                        "serviceName",
+                        NULL,
+                        default="")))
+            private$..saveEditorScript <- jmvcore::OptionAction$new(
+                "saveEditorScript",
+                saveEditorScript,
+                hidden=TRUE,
+                action="openExternal")
+            private$..editorCleared <- jmvcore::OptionBool$new(
+                "editorCleared",
+                editorCleared,
+                hidden=TRUE,
+                default=FALSE)
+            private$..omvFile <- jmvcore::OptionFile$new(
+                "omvFile",
+                omvFile,
+                extensions=list(
+                    "omv"))
+            private$..saveOmvFile <- jmvcore::OptionAction$new(
+                "saveOmvFile",
+                saveOmvFile,
+                hidden=TRUE,
+                action="openExternal")
+            private$..previewDataext <- jmvcore::OptionBool$new(
+                "previewDataext",
+                previewDataext,
+                hidden=TRUE,
+                default=FALSE)
+            private$..previewDataextRequest <- jmvcore::OptionBool$new(
+                "previewDataextRequest",
+                previewDataextRequest,
+                hidden=TRUE,
+                default=FALSE)
+            private$..dataextInfo <- jmvcore::OptionGroup$new(
+                "dataextInfo",
+                dataextInfo,
+                hidden=TRUE,
+                elements=list(
+                    jmvcore::OptionString$new(
+                        "json",
+                        NULL,
+                        default="{}")))
             private$..R <- jmvcore::OptionList$new(
                 "R",
                 R,
@@ -64,44 +142,90 @@ RjOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 toggle,
                 default=FALSE,
                 hidden=TRUE)
+            private$..graphicCapture <- jmvcore::OptionString$new(
+                "graphicCapture",
+                graphicCapture,
+                default="",
+                hidden=TRUE)
 
             self$.addOption(private$..code)
+            self$.addOption(private$..editorState)
+            self$.addOption(private$..saveEditorScript)
+            self$.addOption(private$..editorCleared)
+            self$.addOption(private$..omvFile)
+            self$.addOption(private$..saveOmvFile)
+            self$.addOption(private$..previewDataext)
+            self$.addOption(private$..previewDataextRequest)
+            self$.addOption(private$..dataextInfo)
             self$.addOption(private$..R)
             self$.addOption(private$..vars)
             self$.addOption(private$..output)
             self$.addOption(private$..figWidth)
             self$.addOption(private$..figHeight)
             self$.addOption(private$..toggle)
+            self$.addOption(private$..graphicCapture)
         }),
     active = list(
         code = function() private$..code$value,
+        editorState = function() private$..editorState$value,
+        saveEditorScript = function() private$..saveEditorScript$value,
+        editorCleared = function() private$..editorCleared$value,
+        omvFile = function() private$..omvFile$value,
+        saveOmvFile = function() private$..saveOmvFile$value,
+        previewDataext = function() private$..previewDataext$value,
+        previewDataextRequest = function() private$..previewDataextRequest$value,
+        dataextInfo = function() private$..dataextInfo$value,
         R = function() private$..R$value,
         vars = function() private$..vars$value,
         output = function() private$..output$value,
         figWidth = function() private$..figWidth$value,
         figHeight = function() private$..figHeight$value,
-        toggle = function() private$..toggle$value),
+        toggle = function() private$..toggle$value,
+        graphicCapture = function() private$..graphicCapture$value),
     private = list(
         ..code = NA,
+        ..editorState = NA,
+        ..saveEditorScript = NA,
+        ..editorCleared = NA,
+        ..omvFile = NA,
+        ..saveOmvFile = NA,
+        ..previewDataext = NA,
+        ..previewDataextRequest = NA,
+        ..dataextInfo = NA,
         ..R = NA,
         ..vars = NA,
         ..output = NA,
         ..figWidth = NA,
         ..figHeight = NA,
-        ..toggle = NA)
+        ..toggle = NA,
+        ..graphicCapture = NA)
 )
 
 RjResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "RjResults",
     inherit = jmvcore::Group,
-    active = list(),
+    active = list(
+        omvExport = function() private$.items[["omvExport"]],
+        dataextPreview = function() private$.items[["dataextPreview"]]),
     private = list(),
     public=list(
         initialize=function(options) {
             super$initialize(
                 options=options,
                 name="",
-                title="R")}))
+                title="R")
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="omvExport",
+                title="",
+                visible=FALSE,
+                clearWith=list()))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="dataextPreview",
+                title="External dataset preview",
+                visible=FALSE,
+                clearWith=list()))}))
 
 RjBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "RjBase",
@@ -129,26 +253,46 @@ RjBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' 
 #' @param data .
 #' @param code .
+#' @param editorState .
+#' @param saveEditorScript .
+#' @param editorCleared .
+#' @param omvFile .
+#' @param saveOmvFile .
+#' @param previewDataext .
+#' @param previewDataextRequest .
+#' @param dataextInfo .
 #' @param R .
 #' @param vars .
 #' @param output .
 #' @param figWidth .
 #' @param figHeight .
 #' @param toggle .
+#' @param graphicCapture .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$omvExport} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$dataextPreview} \tab \tab \tab \tab \tab a html \cr
 #' }
 #'
 #' @export
 Rj <- function(
     data,
     code = "\n# summary(data[1:3])\n",
+    editorState,
+    saveEditorScript = FALSE,
+    editorCleared = FALSE,
+    omvFile = NULL,
+    saveOmvFile = FALSE,
+    previewDataext = FALSE,
+    previewDataextRequest = FALSE,
+    dataextInfo,
     R = "bundled",
     vars,
     output = "noEcho",
     figWidth = "",
     figHeight = "",
-    toggle = FALSE) {
+    toggle = FALSE,
+    graphicCapture = "") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("Rj requires jmvcore to be installed (restart may be required)")
@@ -162,12 +306,21 @@ Rj <- function(
 
     options <- RjOptions$new(
         code = code,
+        editorState = editorState,
+        saveEditorScript = saveEditorScript,
+        editorCleared = editorCleared,
+        omvFile = omvFile,
+        saveOmvFile = saveOmvFile,
+        previewDataext = previewDataext,
+        previewDataextRequest = previewDataextRequest,
+        dataextInfo = dataextInfo,
         R = R,
         vars = vars,
         output = output,
         figWidth = figWidth,
         figHeight = figHeight,
-        toggle = toggle)
+        toggle = toggle,
+        graphicCapture = graphicCapture)
 
     analysis <- RjClass$new(
         options = options,

@@ -1,24 +1,32 @@
-title: Rj Editor
+title: Rj Editor +
 name: Rjp
-jus: '2.0'
+jus: '3.0'
 compilerMode: tame
 events:
   loaded: './main::loaded'
   update: './main::update'
 children:
-  - type: CollapseBox
-    label: Variables
-    collapsed: false
+  - type: CustomControl
+    name: rjpAccordion
+
+  - type: VariableSupplier
+    permitted:
+      - factor
+      - numeric
+      - id
+    persistentItems: false
     stretchFactor: 1
     children:
-      - type: VariableSupplier
-        persistentItems: false
-        stretchFactor: 1
+      - type: TargetLayoutBox
+        label: Variables
         children:
-          - type: TargetLayoutBox
-            label: Variables
-            children:
-              - type: VariablesListBox
-                name: vars
-                isTarget: true
-                height: smallest
+          - type: VariablesListBox
+            name: vars
+            isTarget: true
+            height: smallest
+            ghostText: 'optional — becomes "data" in your code'
+            events:
+              change: ./main::onChange_vars
+  - type: File
+    name: omvFile
+    label: OMV input

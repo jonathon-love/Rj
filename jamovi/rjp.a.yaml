@@ -19,6 +19,68 @@ options:
       type: String
       hidden: true
 
+    - name: editorState
+      type: Group
+      hidden: true
+      passive: true
+      elements:
+        - name: draft
+          type: String
+          default: ''
+        - name: hasDraft
+          type: Bool
+          default: false
+        - name: filename
+          type: String
+          default: ''
+        - name: baseline
+          type: String
+          default: ''
+        - name: serviceCode
+          type: String
+          default: ''
+        - name: serviceName
+          type: String
+          default: ''
+
+    - name: saveEditorScript
+      type: Action
+      hidden: true
+      action: openExternal
+
+    - name: editorCleared
+      type: Bool
+      hidden: true
+      default: false
+
+    - name: omvFile
+      type: File
+      title: OMV input
+      extensions: [omv]
+
+    - name: saveOmvFile
+      type: Action
+      hidden: true
+      action: openExternal
+
+    - name: previewDataext
+      type: Bool
+      hidden: true
+      default: false
+
+    - name: previewDataextRequest
+      type: Bool
+      hidden: true
+      default: false
+
+    - name: dataextInfo
+      type: Group
+      hidden: true
+      elements:
+        - name: json
+          type: String
+          default: '{}'
+
     - name: R
       title: R version
       type: List
@@ -64,6 +126,11 @@ options:
     - name: createdColumns
       type: Output
       default: true
+      hidden: true
+
+    - name: graphicCapture
+      type: String
+      default: ''
       hidden: true
 
 ...

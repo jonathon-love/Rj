@@ -3,6 +3,18 @@ name:  Rj
 title: R
 jrs:   '1.1'
 
-items: []
+items:
+  - name: omvExport
+    type: Html
+    title: ''
+    visible: false
+    clearWith: []
+
+  - name: dataextPreview
+    type: Html
+    title: External dataset preview
+    visible: false
+    clearWith: []
+
 
 ...

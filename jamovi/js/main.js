@@ -1,3 +1,5 @@
+const _ = require('./mzRj_i18n');
+const moduleVersion = require('./mzRj_version');
 
 const ace = require('brace');
 
@@ -7,6 +9,11 @@ require('brace/ext/language_tools');
 require('./css');
 const Suggest = require('./suggest');
 const SuggestIcons = require('./suggesticons');
+const initSettings = require('./mzRj_settings');
+const initFiles = require('./mzRj_editor_files');
+const createToast = require('./mzRj_toast');
+const styleVariables = require('./mzRj_variables');
+const initOmvFiles = require('./mzRj_omv_files');
 
 // const SNIPPETS = require('./snippets');
 // const snippetManager = ace.acequire('ace/snippets').snippetManager;
@@ -30,78 +37,78 @@ const events = {
         let $contents = ui.view.el;
         $contents.style.display = 'flex';
         $contents.style.flexDirection = 'column';
+        $contents.classList.add('mzrj-editor-content');
+        $contents.classList.toggle('mzrj-plain-editor', !ui.rjpAccordion);
 
         $contents.insertAdjacentHTML('beforeend', `
-            <div id="editor-box">
+            <div id="editor-box" class="mzrj-editor">
+                <div id="service-bar"><button type="button" id="load-service" title="${_('Run a preparatory R script before the editor')}">${_('Service…')}</button><span id="service-name"></span><button type="button" id="remove-service" title="${_('Remove Service script')}" aria-label="${_('Remove Service script')}" hidden>×</button></div>
                 <div id="toolbar">
-                    <div id="config" title="Configuration"></div>
-                    <div id="run" title="Run"></div>
+                    <div id="editor-heading"><button type="button" id="clear-script">${_('Clear')}</button><span>${_('R editor')}</span><span id="editor-filename"></span></div>
+                    <div id="editor-actions">
+                        <div id="script-actions" role="group" aria-label="${_('Scripts')}"><span id="scripts-label">${_('Scripts')}</span><button type="button" id="load-script">${_('Load')}</button><button type="button" id="save-script">${_('Save')}</button></div>
+                        <div id="config-container">
+                        <button type="button" id="config" title="${_('Settings')}" aria-label="${_('Settings')}" aria-expanded="false" aria-controls="menu">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2"/><circle cx="16" cy="12" r="2.2"/><circle cx="8" cy="18" r="2.2"/></svg>
+                        </button>
+                <div id="menu" role="region" aria-label="${_('R editor settings')}" aria-hidden="true" hidden>
+                    <div class="mzrj-setting-row"><label for="output">${_('Output')}</label>
+                        <select id="output"><option value="noEcho">${_('Show output only')}</option><option value="echo">${_('Show code and output')}</option></select>
+                    </div>
+                    <section id="figure-size" aria-labelledby="figure-size-title">
+                        <div id="figure-size-title">${_('Figure size (px)')}</div>
+                        <div class="mzrj-figure-inputs"><label for="figure-width">${_('Width')}</label><input id="figure-width" placeholder="${_('Default')}" inputmode="numeric">
+                            <label for="figure-height">${_('Height')}</label><input id="figure-height" placeholder="${_('Default')}" inputmode="numeric"></div>
+                    </section>
+                    <div id="code-label"><span>${_('R Code')}</span><span id="rj-module-version"></span></div>
+                    <div class="mzrj-interpreter-row"><span id="r-label">${_('R interpreter:')}</span>
+                        <div id="r-interpreter" role="radiogroup" aria-labelledby="r-label">
+                            <label title="${_('R included with jamovi.')}"><input type="radio" name="r-interpreter" value="bundled"><span>${_('Embedded')}</span></label>
+                            <label title="${_('R installed on your computer, using its own libraries.')}"><input type="radio" name="r-interpreter" value="external"><span>${_('System')}</span></label>
+                        </div>
+                    </div>
+                    <section id="omv-files"><div class="mzrj-omv-heading"><strong>${_('External OMV files')}</strong><span class="mzrj-omv-input"></span><button type="button" id="save-omv" disabled>${_('Save…')}</button></div>
+                    <p>dataext: <span id="dataext-name">${_('Empty')}</span><span id="dataext-dimensions"></span></p>
+                    <label class="mzrj-preview"><input type="checkbox" id="preview-dataext">${_('Show preview in Results')}</label><p>${_('Separate from the current jamovi dataset.')}</p></section>
                 </div>
+                        </div><button type="button" id="run" title="${_('Run')}" aria-label="${_('Run')}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M8 5.5a1 1 0 0 1 1.5-.86l10 6a1 1 0 0 1 0 1.72l-10 6A1 1 0 0 1 8 17.5Z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="editor-file" accept=".R,.r" hidden><input type="file" id="service-file" accept=".R,.r" hidden>
+                <div id="editor-message" role="status" hidden></div>
+                <div id="editor-replace" hidden><span id="replace-message"></span><button type="button" id="replace-script">${_('Replace')}</button><button type="button" id="cancel-script">${_('Cancel')}</button></div>
                 <div id="editor"></div>
-                <div id="info">Ctrl + Shift + Enter to run</div>
+                <div id="info">${_('Ctrl + Shift + Enter to run')}</div>
             </div>`);
 
-        let $config = $contents.querySelector('#config');
-        $config.innerHTML = `
-            <div id="menu">
-                <label id="r-label">R Version</label>
-                <select id="r-version">
-                    <option value="bundled">jamovi R</option>
-                    <option value="external">System R</option>
-                </select>
-                <label id="output-label">Output</label>
-                <select id="output">
-                    <option value="noEcho">Show output only</option>
-                    <option value="echo">Show code and output</option>
-                </select>
-                <div id="figure-size">
-                    <div id="figure-size-title">Figure size (px)</div>
-                    <label>Width</label>
-                    <input id="figure-width" placeholder="Default">
-                    <label>Height</label>
-                    <input id="figure-height" placeholder="Default">
-                </div>
-            </div>`;
-
+        $contents.querySelector('#rj-module-version').textContent = 'Rj v' + moduleVersion;
         this.$editor = $contents.querySelector('#editor');
         this.$run = $contents.querySelector('#run');
         this.$menu = $contents.querySelector('#menu');
-
         this.$run.addEventListener('click', () => this.run(ui));
-
-        this.$output = $config.querySelector('#output');
-        this.$output.addEventListener('change', (event) => {
-            ui.output.setValue(this.$output.value);
-        });
-
-        this.$r = $config.querySelector('#r-version');
-        this.$r.addEventListener('change', (event) => {
-            ui.R.setValue(this.$r.value);
-        });
-
-        this.$figWidth = $config.querySelector('#figure-width');
-        this.$figHeight = $config.querySelector('#figure-height');
-
-        this.$menu.querySelectorAll('input').forEach(el => el.addEventListener('keyup', (event) => {
-            if (event.keyCode == 13)
-                this.run(ui);
-        }));
-
-        $config.addEventListener('click', (event) => {
-            if (event.target === $config)
-                this.toggleMenu(ui);
-        });
-
-        this.$editor.addEventListener('click', () => {
-            this.hideMenu(ui);
-        });
+        if (this.settings)
+            this.settings.dispose();
+        this.settings = initSettings(ui, $contents, () => this.run(ui));
+        this.$output = $contents.querySelector('#output');
+        this.$r = this.settings.selection;
+        this.$figWidth = $contents.querySelector('#figure-width');
+        this.$figHeight = $contents.querySelector('#figure-height');
+        this.$editor.addEventListener('click', () => this.hideMenu(ui));
 
         if (navigator.platform === 'MacIntel') {
             let $info = $contents.querySelector('#info');
-            $info.textContent = '\u2318 + Shift + Enter to run';
+            $info.textContent = _('\u2318 + Shift + Enter to run');
         }
 
-        this.editor = ace.edit('editor');
+        this.editor = ace.edit(this.$editor);
+        if (this.notifications) this.notifications.dispose();
+        this.notifications = createToast($contents);
+        this.showToast = (text, options) => this.notifications.show(text, options);
+        initFiles.call(this, ui, $contents);
+        styleVariables(ui);
+        initOmvFiles(ui, this.$menu);
 
         this.editor.$blockScrolling = Infinity; // disable a warning
         this.editor.setShowPrintMargin(false);
@@ -144,7 +151,7 @@ const events = {
             }
             else if (event.command.name === 'paste') {
                 // some times these extra kookie characters show up
-                event.args.text = event.args.text.replace(/[\r\u200B-\u200D\uFEFF]/g, '');
+                event.args.text = event.args.text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
             }
         });
 
@@ -175,39 +182,33 @@ const events = {
                 });
         };
 
-        this.toggleMenu = (ui) => {
-            if ( ! this.$menu.classList.contains('visible'))
-                this.showMenu(ui);
-            else
-                this.hideMenu(ui);
-        };
-
-        this.showMenu = (ui) => {
-            this.$menu.classList.add('visible');
-        };
-
-        this.hideMenu = (ui) => {
-            this.$menu.classList.remove('visible');
-
-            ui.view.model.options.beginEdit();
-            ui.figWidth.setValue(this.$figWidth.value);
-            ui.figHeight.setValue(this.$figHeight.value);
-            ui.output.setValue(this.$output.value);
-            ui.R.setValue(this.$r.value);
-            ui.view.model.options.endEdit();
-        };
+        this.showMenu = () => this.settings.show();
+        this.hideMenu = (ui, apply = true) => this.settings.hide(apply);
 
         this.run = async(ui) => {
+            if (!this.currentSession)
+                return;
+            this.hideMenu(ui, false);
+            const session = this.currentSession;
+            const request = this.runRequest = (this.runRequest || 0) + 1;
 
             let script = this.currentSession.getDocument().getValue();
-            script = script.replace(/[\r\u200B-\u200D\uFEFF]/g, '');
+            script = script.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
 
             let columns = [ ];
-            if (window.name === 'Rj-Rj')
-                columns = await this.getColumnNames();
+            try {
+                if (window.name === 'Rj-Rj') columns = await this.getColumnNames();
+            } catch (error) {
+                if (session === this.currentSession && request === this.runRequest)
+                    this.showToast(_('Unable to read dataset columns. Please try again.'), {kind:'error', duration:10000});
+                return;
+            }
+            if (session !== this.currentSession || request !== this.runRequest)
+                return;
 
             ui.view.model.options.beginEdit();
 
+            ui.editorCleared.setValue(false);
             ui.figWidth.setValue(this.$figWidth.value);
             ui.figHeight.setValue(this.$figHeight.value);
             ui.output.setValue(this.$output.value);
@@ -268,30 +269,52 @@ const events = {
     },
 
     onDataChanged(ui, event) {
-        if ( ! this.currentSession.allColumns)
+        if ( ! this.currentSession || ! this.currentSession.allColumns)
             return;
         if (event.dataType !== 'columns')
             return;
+        const session = this.currentSession;
         this.getColumnNames().then((columns) => {
+            if (session !== this.currentSession)
+                return;
             let old = ui.vars.value();
             if ( ! arrayEquals(old, columns))
                 ui.vars.setValue(columns);
         });
     },
 
+    onChange_vars(ui) { styleVariables(ui); },
+
     update(ui, event) {
+        styleVariables(ui);
 
         let id = event.id;
+        const previous = this.currentSession;
         this.currentSession = this.editSessions[id];
 
         if (this.currentSession === undefined) {
 
-            let code = ui.code.value();
-            this.currentSession = ace.createEditSession(code, 'ace/mode/r');
-            this.editSessions[id] = this.currentSession;
+            const stored = ui.editorState.value() || {};
+            const code = stored.hasDraft ? stored.draft : ui.code.value();
+            const session = ace.createEditSession(code, 'ace/mode/r');
+            session.rjState = {draft:code,hasDraft:!!stored.hasDraft,filename:stored.filename||'',baseline:stored.hasDraft ? stored.baseline : code,serviceCode:stored.serviceCode||'',serviceName:stored.serviceName||''};
+            this.currentSession = session;
+            this.editSessions[id] = session;
+            session.on('change', () => { if (session === this.currentSession) this.persistEditor(); });
+        }
+        if (previous && previous !== this.currentSession) {
+            this.settings.hide(false);
+            this.notifications.clear();
+            this.fileRequest = (this.fileRequest || 0) + 1;
+            this.runRequest = (this.runRequest || 0) + 1;
+            this.pendingFile = null;
+            ui.view.el.querySelector('#editor-replace').hidden = true;
         }
 
         this.editor.setSession(this.currentSession);
+        this.refreshFiles();
+        this.placeServiceHeader();
+        initOmvFiles(ui, this.$menu);
 
         this.$figWidth.value = ui.figWidth.value();
         this.$figHeight.value = ui.figHeight.value();

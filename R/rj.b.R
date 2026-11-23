@@ -6,11 +6,41 @@ RjClass <- R6::R6Class(
         saveColumns=function() FALSE
     ),
     private = list(
+        .editorUiOnly=FALSE,
+        .graphicCaptureOnly=FALSE,
+        .resultsUiOnly=FALSE,
+        .postInit=function() .mzRj_omvInfo(self),
         .run = function() {
+            if(private$.graphicCaptureOnly) {
+                on.exit({private$.graphicCaptureOnly<-FALSE;private$.resultsUiOnly<-FALSE;
+                    .mzRj_clearGraphicCapture(self)},add=TRUE)
+                .mzRj_applyGraphicCapture(self)
+                return()
+            }
+            if(private$.resultsUiOnly) {private$.resultsUiOnly<-FALSE;return()}
+            if(nzchar(self$options$graphicCapture)) .mzRj_clearGraphicCapture(self)
+            if(.mzRj_omvAction(self)) return()
+            if (isTRUE(self$options$saveEditorScript)) {
+                .mzRj_saveEditor(self)
+                return()
+            }
+            if (private$.editorUiOnly)
+                return()
 
+            previousExternal <- .mzRj_omvState(self)
             self$results$clear()
+            .mzRj_omvRestore(self,previousExternal)
 
-            code <- self$options$code
+            if (isTRUE(self$options$editorCleared)) {
+                eval('', self$data, FALSE, self$results, saveColumns=self$saveColumns)
+                return()
+            }
+            context <- new.env(parent=emptyenv())
+            context$data <- .mzRj_dataext(self)
+            code <- .mzRj_editorCode(self)
+            sourceInfo <- .mzRj_editorSources(self)
+            sourceInfo$messages <- c(.mzRj_remoteMessages(self), .mzRj_graphicsMessages(self), .mzRj_barberJohnsonMessages(self))
+            sourceInfo$graphicsAssets <- .mzRj_graphicsAssets()
             echo <- self$options$output == 'echo'
             figWidth  <- self$options$figWidth
             figHeight <- self$options$figHeight
@@ -19,14 +49,21 @@ RjClass <- R6::R6Class(
 
                 eval(code, self$data, echo, self$results,
                      figWidth=figWidth, figHeight=figHeight,
-                     saveColumns=self$saveColumns)
+                     saveColumns=self$saveColumns,dataextEnv=context,sourceInfo=sourceInfo)
 
             } else {
 
                 scriptPath <- system.file('remote.R', package='Rj', mustWork=TRUE)
                 outputPath <- tempfile()
+                dataextInput <- tempfile(fileext='.rds');dataextOutput <- tempfile(fileext='.rds')
+                evaluatorPath <- tempfile(fileext='.R')
+                dataInput <- tempfile(fileext='.rds')
+                on.exit(unlink(c(outputPath,dataextInput,dataextOutput,evaluatorPath,dataInput)),add=TRUE)
+                saveRDS(context$data,dataextInput)
+                saveRDS(self$data,dataInput)
+                writeLines(c('.mzRj_barberJohnsonPrepare <-',deparse(.mzRj_barberJohnsonPrepare),'.mzRj_graphicsFactory <-',deparse(.mzRj_graphicsFactory),'.mzRj_eval <-',deparse(eval),'.mzRj_sourceInfo <-',deparse(sourceInfo),'.mzRj_messages <-',deparse(.mzRj_remoteMessages(self)),
+                    '. <- function(text) {value <- .mzRj_messages[[text]];if(is.null(value))text else value}'),evaluatorPath)
 
-                datasetPath <- gsub('\\', '/', .datasetPath, fixed=TRUE)
                 outputPath <- gsub('\\', '/', outputPath, fixed=TRUE)
 
                 code <- gsub('\\', '\\\\', code, fixed=TRUE)
@@ -34,89 +71,45 @@ RjClass <- R6::R6Class(
 
                 script <- readLines(scriptPath)
                 script <- paste0(script, collapse='\n')
-                script <- gsub('{{CODE}}', code, script, fixed=TRUE)
-                script <- gsub('{{DATASET}}', datasetPath, script, fixed=TRUE)
+                script <- gsub('{{DATA_INPUT}}', deparse1(dataInput), script, fixed=TRUE)
                 script <- gsub('{{OUTPATH}}', outputPath, script, fixed=TRUE)
                 script <- gsub('{{FIGWIDTH}}', figWidth, script, fixed=TRUE)
                 script <- gsub('{{FIGHEIGHT}}', figHeight, script, fixed=TRUE)
                 script <- gsub('{{ECHO}}', echo, script, fixed=TRUE)
 
-                columns <- self$options$get('vars')
-                if (is.null(columns))
-                    columns <- character()
-                columns <- deparse1(columns)
-                script <- gsub('{{COLUMNS}}', columns, script, fixed=TRUE)
-
                 script <- gsub('{{SAVECOLUMNS}}', self$saveColumns, script, fixed=TRUE)
+                script <- gsub('{{EVALUATOR}}', deparse1(evaluatorPath), script, fixed=TRUE)
+                script <- gsub('{{DATAEXT_INPUT}}', deparse1(dataextInput), script, fixed=TRUE)
+                script <- gsub('{{DATAEXT_OUTPUT}}', deparse1(dataextOutput), script, fixed=TRUE)
+                script <- gsub('{{CODE}}', code, script, fixed=TRUE)
 
                 R <- private$.findR()
 
-                Sys.unsetenv(c(
-                    'R_ENVIRON',
-                    'R_PROFILE',
-                    'R_PROFILE_USER',
-                    'R_ENVIRON_USER',
-                    'R_LIBS_SITE',
-                    'R_LIBS_USER',
-                    'R_LIBS',
-                    'R_USER',
-                    'HOME'));
-
-                if (Sys.info()['sysname'] == 'Windows') {
-
-                    rcv <- package_version(R$rcv)
-
-                    if (rcv > package_version('4.1.3')) {
-                        libPaths=file.path(rappdirs::user_data_dir(), 'R', 'win-library', '%v')
-                    } else {
-                        libPaths=file.path(Sys.getenv('USERPROFILE'), 'Documents', 'R', 'win-library', '%v')
-                    }
-
-                    Sys.setenv(R_LIBS_USER=libPaths)
-
-                    # Update cleanupCode only for "cli"
-                    cleanupCode <- '
-                        tryCatch({
-                            try({
-                                cli_dll <- getLoadedDLLs()[["cli"]]
-                                if (!is.null(cli_dll)) {
-                                    dyn.unload(cli_dll[["path"]])
-                                }
-                            }, silent=TRUE)
-                        }, error=function(e) invisible(NULL))
-                        '
-
-                    script <- paste0(script, cleanupCode)
-
-                    result <- system2(
-                        command='c:\\windows\\system32\\cmd.exe',
-                        args=c(
-                            '/c',
-                            dQuote(R$path),
-                            '--no-save',
-                            '--no-restore',
-                            '--slave'),
-                        stdout=TRUE,
-                        stderr=TRUE,
-                        input=script)
-
-                } else {
-
-                    result <- system2(
-                        command=R$path,
-                        args=c(
-                            '--no-save',
-                            '--no-restore',
-                            '--slave'),
-                        stdout=TRUE,
-                        stderr=TRUE,
-                        input=script)
+                # Retain the existing Windows cli shutdown workaround for older R.
+                if(identical(Sys.info()[['sysname']],'Windows')) {
+                    script <- paste0(script, '\ntry({
+    cli_dll <- getLoadedDLLs()[["cli"]]
+    if(!is.null(cli_dll)) dyn.unload(cli_dll[["path"]])
+}, silent=TRUE)\n')
                 }
 
-                for (line in result) {
-                    if (jmvcore::startsWith(line, 'ERROR: ')) {
+                result <- .mzRj_runProcess(
+                    command=R$path,
+                    args=c('--no-save','--no-restore','--slave','--encoding=UTF-8'),
+                    script=script,
+                    env=.mzRj_systemREnv(R$rcv),
+                    checkpoint=function() private$.checkpoint(flush=FALSE),
+                    errorMarker='ERROR_RDS')
+                status <- attr(result,'status')
+                if(!is.null(status) && status!=0L)
+                    stop(paste(.("System R stopped with exit status"),status,
+                        paste(tail(result,5L),collapse='\n')),call.=FALSE)
+                receivedResults <- FALSE
 
-                        message <- substring(line, 8)
+                for (line in result) {
+                    if (jmvcore::startsWith(line, 'ERROR: ') || identical(line,'ERROR_RDS')) {
+
+                        message <- if(identical(line,'ERROR_RDS'))readRDS(outputPath)$message else substring(line, 8)
                         if (message == 'Memory segment version is too new')
                             message <- 'A newer version of jmvconnect is required'
                         if (message == 'Memory segment version is too old')
@@ -124,11 +117,16 @@ RjClass <- R6::R6Class(
                         stop(message, call.=FALSE)
 
                     } else if (line == 'OK') {
+                        receivedResults <- TRUE
                         results <- readRDS(file=outputPath)
+                        context$data <- readRDS(dataextOutput)
                         for (item in results$items)
                             self$results$add(item)
                     }
                 }
+
+                if(!receivedResults)
+                    stop(.("System R did not return results."),call.=FALSE)
 
                 unlink(outputPath)
 
@@ -139,8 +137,18 @@ RjClass <- R6::R6Class(
                 # text$setContent(result)
             }
 
+            .mzRj_stageDataext(self,context$data,if(is.null(previousExternal$source_name))'' else previousExternal$source_name)
+            .mzRj_omvInfo(self)
+            .mzRj_omvPreview(self)
+            .mzRj_bindImages(self)
         },
         .render=function(image, ...) {
+            if(is.list(image$state) && !is.null(image$state$mzrj_nativePng)) {
+                bitmap<-png::readPNG(jsonlite::base64_dec(image$state$mzrj_nativePng))
+                grid::grid.raster(bitmap,width=grid::unit(1,'npc'),
+                    height=grid::unit(1,'npc'),interpolate=TRUE)
+                return(TRUE)
+            }
             recordedPlot <- image$state
 
             for (i in seq_along(recordedPlot[[1]])) {
@@ -201,7 +209,7 @@ RjClass <- R6::R6Class(
 
                 # If entries are invalid or missing
                 if (inherits(entries, 'try-error')) {
-                    stop("Could not find R installation in the Windows registry (HLM or HCU)")
+                    stop(.("Could not find R installation in the Windows registry (HLM or HCU)"))
                 }
 
                 # Extract version and path
@@ -225,10 +233,10 @@ RjClass <- R6::R6Class(
                     return(list(path = path, rcv = rcv))
                 }
 
-                stop("Could not locate R.exe at the specified registry path")
+                stop(.("Could not locate R.exe at the specified registry path"))
 
             } else {  # For Linux and other Unix-like systems
-                path <- system2('which', args = 'R', stdout = TRUE)
+                path <- unname(Sys.which('R'))
                 if (file.exists(path))
                     return(list(path = path))
                 if (file.exists('/usr/bin/R'))
@@ -237,7 +245,7 @@ RjClass <- R6::R6Class(
                     return(list(path = '/usr/local/bin/R'))
             }
 
-            stop('Could not find system R')
+            stop(.('Could not find system R'))
         }),
     public=list(
         asSource=function() {
@@ -247,6 +255,9 @@ RjClass <- R6::R6Class(
                 return('')
         },
         .load=function(vChanges=character()) {
+            private$.editorUiOnly <- FALSE
+            private$.graphicCaptureOnly <- FALSE
+            private$.resultsUiOnly <- FALSE
 
             jmvcore:::initProtoBuf()
 
@@ -260,25 +271,32 @@ RjClass <- R6::R6Class(
                 pb <- jmvcore:::RProtoBuf_read(jamovi.coms.AnalysisResponse, conn)
                 groupPB <- pb$results$group
 
-                for (itemPB in groupPB$elements) {
-                    if (itemPB$has('preformatted')) {
-                        self$results$add(jmvcore::Preformatted$new(
-                            self$options,
-                            name=itemPB$name,
-                            title=itemPB$title))
-                    } else if (itemPB$has('image')) {
-                        self$results$add(jmvcore::Image$new(
-                            self$options,
-                            name=itemPB$name,
-                            title=itemPB$title,
-                            renderFun='.render',
-                            width=itemPB$image$width,
-                            height=itemPB$image$height))
-                    }
-                }
-
                 oChanges <- private$.options$compProtoBuf(pb$options)
-                private$.results$fromProtoBuf(pb$results, oChanges, vChanges)
+                pending <- is.character(self$options$graphicCapture) && nzchar(self$options$graphicCapture)
+                resizeChanges <- grep('^results/.+/(widthScale|heightScale|width|height)$',oChanges,value=TRUE)
+                presentationChanges <- c(resizeChanges,'graphicCapture','editorState','createdColumns','dataextInfo')
+                private$.graphicCaptureOnly <- length(vChanges)==0L &&
+                    ('graphicCapture' %in% oChanges || pending) &&
+                    all(oChanges %in% presentationChanges)
+                resizeOnly <- length(vChanges)==0L && length(resizeChanges)>0L &&
+                    all(oChanges %in% presentationChanges)
+                private$.resultsUiOnly <- resizeOnly
+                private$.editorUiOnly <- resizeOnly || (length(vChanges)==0L && length(oChanges)>0L &&
+                    all(oChanges %in% c('editorState','saveEditorScript','dataextInfo')))
+                saving <- isTRUE(self$options$saveEditorScript) || isTRUE(self$options$saveOmvFile) ||
+                    !is.null(self$options$omvFile) || isTRUE(self$options$previewDataextRequest) || private$.editorUiOnly || private$.graphicCaptureOnly
+                .mzRj_restoreResults(self, groupPB, if(saving)character() else '*', pb$options)
+                private$.results$fromProtoBuf(pb$results,
+                    if(saving)character() else oChanges,
+                    if(saving)character() else vChanges)
+                # INIT saves new scales before a fresh RUN sees identical options.
+                rootState<-self$results$state
+                if(!is.list(rootState))rootState<-list()
+                if(isTRUE(rootState$mzRjNativeResize)&&length(vChanges)==0L&&
+                   all(oChanges %in% presentationChanges))private$.resultsUiOnly<-TRUE
+                rootState$mzRjNativeResize<-isTRUE(private$.resultsUiOnly)
+                self$results$setState(rootState)
+                if(private$.resultsUiOnly) .mzRj_resizeImages(self$results,groupPB,resizeChanges)
             }
 
             private$.clear(vChanges)

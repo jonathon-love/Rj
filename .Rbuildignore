@@ -1,3 +1,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^jamovi/.*$
+
+^tests$
+^docs$
+^tools$
+^examples$

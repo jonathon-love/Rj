@@ -1,0 +1,8 @@
+mzGraphics
+Copyright (C) 2026 Maurizio Agosti
+SPDX-License-Identifier: GPL-2.0-or-later
+
+Derived from the Pj D3 sources and Pj Plotly bridge by the same author.
+D3.js and Plotly.js are separate third-party libraries, not included in these bundles.
+Their original licenses remain with the consuming module.
+Build tools Terser and clean-css retain their own licenses.

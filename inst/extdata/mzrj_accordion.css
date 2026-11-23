@@ -1,0 +1,30 @@
+
+.jmv-results-html:has(> .content > .mzrj-accordion){width:500px;min-width:0;max-width:100%}
+.mzrj-accordion{width:100%;box-sizing:border-box;max-width:100%;min-width:0;margin:6px 0 12px;font:13px/1.5 Arial,sans-serif;color:#334155}
+.mzrj-accordion>summary{display:flex;align-items:center;gap:6px;list-style:none;cursor:pointer;color:#3e6da9;font-weight:500;padding:4px 0;overflow-x:auto}
+.mzrj-accordion>summary::-webkit-details-marker{display:none}
+.mzrj-accordion>summary:focus-visible{outline:2px solid #3e6da9;outline-offset:3px}
+.mzrj-accordion[open]>summary{font-weight:700}
+.mzrj-accordion-icon{display:flex;align-items:center;justify-content:center;flex:none;width:18px;padding-inline-end:6px;border-inline-end:1px solid rgba(62,109,169,.5)}
+.mzrj-accordion-icon svg{width:14px;height:14px;flex:none;overflow:visible}
+.mzrj-accordion-icon .mzrj-accordion-plus-minus{width:12px;height:12px}
+.mzrj-accordion-icon .horizontal,.mzrj-accordion-icon .vertical{transform-origin:center;transform-box:view-box;transition:transform .3s ease,opacity .3s ease}
+.mzrj-accordion-icon .vertical{transform:rotate(0deg);opacity:1}
+.mzrj-accordion[open]>summary .vertical{transform:rotate(90deg);opacity:0}
+.mzrj-accordion-title{display:flex;align-items:center;flex:1;min-width:0;gap:8px}
+.mzrj-accordion-label{flex:none;white-space:nowrap}
+.mzrj-accordion-line>summary .mzrj-accordion-title::before,.mzrj-accordion-line>summary .mzrj-accordion-title::after{content:'';height:1px;background:rgba(62,109,169,.5);flex:0 0 30px;transition:height .3s ease,flex-grow .3s ease,background .3s ease}
+.mzrj-accordion-line[open]>summary .mzrj-accordion-title::before,.mzrj-accordion-line[open]>summary .mzrj-accordion-title::after{height:2px;background:rgba(62,109,169,.7)}
+.mzrj-accordion-line[open]>summary .mzrj-accordion-title::after{flex-grow:1}
+.mzrj-accordion-bordered>summary{border-block:1px solid #c5d6e9;padding:7px 0}
+.mzrj-accordion-bordered>summary .mzrj-accordion-icon{border:0;padding:0}
+.mzrj-accordion-icon .mzrj-accordion-arrow{width:10px;height:10px}
+.mzrj-accordion-arrow{transform-origin:center;transform-box:view-box;transform:rotate(0deg);transition:transform .3s ease}
+.mzrj-accordion-bordered:dir(rtl)>summary .mzrj-accordion-arrow{transform:rotate(180deg)}
+.mzrj-accordion-bordered[open]>summary .mzrj-accordion-arrow{transform:rotate(90deg)}
+.mzrj-accordion-content{padding-top:9px;min-width:0;max-width:100%}
+/* Le vecchie analisi salvate possono includere transition:none!important.
+   Limita la precedenza alle animazioni SVG di questa revisione, come richiesto. */
+.mzrj-accordion[data-mzrj-motion="svg"]>summary .horizontal,.mzrj-accordion[data-mzrj-motion="svg"]>summary .vertical{transition:transform .3s ease,opacity .3s ease!important}
+.mzrj-accordion[data-mzrj-motion="svg"]>summary .mzrj-accordion-arrow{transition:transform .3s ease!important}
+.mzrj-accordion[data-mzrj-motion="svg"]>summary .mzrj-accordion-title::before,.mzrj-accordion[data-mzrj-motion="svg"]>summary .mzrj-accordion-title::after{transition:height .3s ease,flex-grow .3s ease,background .3s ease!important}
